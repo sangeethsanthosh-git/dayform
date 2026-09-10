@@ -1,6 +1,11 @@
 # Dayform — Personal Calendar, Reminder & Daily Planner
 
+[![Release](https://img.shields.io/github/v/release/sangeethsanthosh-git/dayform?color=E5BD78&label=Latest%20Release)](https://github.com/sangeethsanthosh-git/dayform/releases/latest)
+[![APK Downloads](https://img.shields.io/github/downloads/sangeethsanthosh-git/dayform/total?color=8E6827&label=Downloads)](https://github.com/sangeethsanthosh-git/dayform/releases/latest)
+
 **Dayform** is a serene, offline-first personal organizer designed to make your day easy to understand at a glance. It unifies events, tasks, reminders, study sessions, habits, birthdays, and recurring payments into a calm, cohesive interface without cognitive clutter or overwhelming density.
+
+📥 **[Download Latest APKs (v1.0.0)](https://github.com/sangeethsanthosh-git/dayform/releases/tag/v1.0.0)** (ARM64 ~21MB, ARMv7 ~19MB, Universal ~61MB)
 
 ---
 
