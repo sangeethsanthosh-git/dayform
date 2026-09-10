@@ -127,7 +127,7 @@ class _TodayScreenState extends State<TodayScreen> {
                       label: 'Reminders',
                       index: 1,
                       isDark: isDark,
-                      count: widget.appState.bills.length + widget.appState.birthdays.length,
+                      count: widget.appState.bills.length,
                     ),
                   ],
                 ),
@@ -187,7 +187,7 @@ class _TodayScreenState extends State<TodayScreen> {
                     const SizedBox(height: 24),
                   ],
                 ] else ...[
-                  // Reminders View (Subscriptions, Bills, Birthdays, Habits)
+                  // Reminders View (Subscriptions, Bills, Habits)
                   ModularTodayCards(
                     habits: widget.appState.settings.visibleTodayModules.contains('habits')
                         ? widget.appState.habits
@@ -198,9 +198,6 @@ class _TodayScreenState extends State<TodayScreen> {
                         ? widget.appState.bills
                         : [],
                     onBillTapped: (b) => _showBillDetail(context, b),
-                    birthdays: widget.appState.settings.visibleTodayModules.contains('birthdays')
-                        ? widget.appState.birthdays
-                        : [],
                   ),
                   const SizedBox(height: 24),
                 ],

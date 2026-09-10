@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../domain/models/bill_item.dart';
-import '../../../domain/models/birthday_item.dart';
 import '../../../domain/models/habit_item.dart';
 
 class ModularTodayCards extends StatelessWidget {
@@ -13,7 +12,6 @@ class ModularTodayCards extends StatelessWidget {
   final Function(String) onToggleHabit;
   final List<BillItem> bills;
   final Function(BillItem) onBillTapped;
-  final List<BirthdayItem> birthdays;
 
   const ModularTodayCards({
     super.key,
@@ -22,7 +20,6 @@ class ModularTodayCards extends StatelessWidget {
     required this.onToggleHabit,
     required this.bills,
     required this.onBillTapped,
-    required this.birthdays,
   });
 
   @override
@@ -42,12 +39,6 @@ class ModularTodayCards extends StatelessWidget {
         if (bills.isNotEmpty) ...[
           _buildUpcomingPaymentsPanel(context, isDark),
           const SizedBox(height: 24),
-        ],
-
-        // 3. Birthdays & Important Dates Card
-        if (birthdays.isNotEmpty) ...[
-          _buildBirthdaysSection(context, isDark),
-          const SizedBox(height: 16),
         ],
       ],
     );
@@ -370,111 +361,6 @@ class ModularTodayCards extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: iconWidget,
-    );
-  }
-
-  // --- BIRTHDAYS SECTION ---
-  Widget _buildBirthdaysSection(BuildContext context, bool isDark) {
-    final upcomingBdays = birthdays.take(3).toList();
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCardSurface : AppColors.lightCardSurface,
-        borderRadius: BorderRadius.circular(AppConstants.cardRadiusLarge),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.cake_outlined, size: 20, color: AppColors.warmAmber),
-              const SizedBox(width: 8),
-              Text(
-                'Birthdays & Milestones',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
-                  letterSpacing: -0.2,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          ...upcomingBdays.map((bday) {
-            final age = bday.getAgeTurning(DateTime.now().year);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                children: [
-                  // Avatar sticker (matching reference media_1788962478438.jpg)
-                  Container(
-                    width: 36,
-                    height: 36,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.warmAmber.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.warmAmber, width: 1.2),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: (bday.customImagePath != null && File(bday.customImagePath!).existsSync())
-                        ? Image.file(File(bday.customImagePath!), width: 36, height: 36, fit: BoxFit.cover)
-                        : Text(
-                            bday.personName.isNotEmpty ? bday.personName[0].toUpperCase() : 'B',
-                            style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.warmAmberForeground),
-                          ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          bday.personName,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
-                          ),
-                        ),
-                        Text(
-                          age != null ? 'Turns $age • ${bday.relationship}' : bday.relationship,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Birth date chip
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      bday.birthDate,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
     );
   }
 

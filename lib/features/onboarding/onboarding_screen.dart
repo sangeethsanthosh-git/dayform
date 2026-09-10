@@ -5,7 +5,6 @@ import '../../core/notifications/notification_service.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../domain/models/birthday_item.dart';
 import '../navigation/main_scaffold.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -67,21 +66,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       birthDateStr =
           "${_selectedBirthDate!.year}-${_selectedBirthDate!.month.toString().padLeft(2, '0')}-${_selectedBirthDate!.day.toString().padLeft(2, '0')}";
 
-      // Automatically register the user's birthday in Dayform
-      final userBirthday = BirthdayItem(
-        id: 'user_birthday_primary',
-        personName: '$name (Me)',
-        birthDate: birthDateStr,
-        birthYear: _selectedBirthDate!.year,
-        relationship: 'partner',
-        avatarPresetIndex: 0,
-        notes: 'My birthday milestone',
-        reminderDaysBefore: 1,
-        createdAt: DateTime.now(),
-      );
-      await widget.appState.addBirthday(userBirthday);
+      // Clean up legacy milestone item if present
+      await widget.appState.deleteBirthday('user_birthday_primary');
 
-      // Schedule notification
+      // Schedule notification reminder for user's birthday
       await NotificationService.instance.scheduleBirthdayReminder(
         id: 999999,
         personName: 'You! 🎂 Happy Birthday, $name',

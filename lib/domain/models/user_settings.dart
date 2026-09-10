@@ -53,7 +53,6 @@ class UserSettings {
       'tasks',
       'habits',
       'payments',
-      'birthdays',
     ],
     this.todayModuleOrder = const [
       'up_next',
@@ -61,7 +60,6 @@ class UserSettings {
       'tasks',
       'habits',
       'payments',
-      'birthdays',
     ],
   });
 
