@@ -1,11 +1,27 @@
-# Dayform — Personal Calendar, Reminder & Daily Planner
+<p align="center">
+  <img src="assets/icons/app_icon.png" width="128" height="128" alt="Dayform App Logo" />
+</p>
 
-[![Release](https://img.shields.io/github/v/release/sangeethsanthosh-git/dayform?color=E5BD78&label=Latest%20Release)](https://github.com/sangeethsanthosh-git/dayform/releases/latest)
-[![APK Downloads](https://img.shields.io/github/downloads/sangeethsanthosh-git/dayform/total?color=8E6827&label=Downloads)](https://github.com/sangeethsanthosh-git/dayform/releases/latest)
+<h1 align="center">Dayform</h1>
+
+<p align="center">
+  <strong>Serene, Privacy-First Personal Calendar, Reminder & Daily Planner</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/sangeethsanthosh-git/dayform/releases/latest"><img src="https://img.shields.io/github/v/release/sangeethsanthosh-git/dayform?color=E5BD78&label=Latest%20Release" alt="Release" /></a>
+  <a href="https://github.com/sangeethsanthosh-git/dayform/releases/latest"><img src="https://img.shields.io/github/downloads/sangeethsanthosh-git/dayform/total?color=8E6827&label=Downloads" alt="Downloads" /></a>
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" alt="Platform" />
+  <img src="https://img.shields.io/badge/Flutter-3.11+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/sangeethsanthosh-git/dayform/releases/tag/v1.0.0"><strong>📥 Download Latest APKs (v1.0.0)</strong></a> &bull; <em>ARM64 (~21MB), ARMv7 (~19MB), Universal (~61MB)</em>
+</p>
+
+---
 
 **Dayform** is a serene, offline-first personal organizer designed to make your day easy to understand at a glance. It unifies events, tasks, reminders, study sessions, habits, birthdays, and recurring payments into a calm, cohesive interface without cognitive clutter or overwhelming density.
-
-📥 **[Download Latest APKs (v1.0.0)](https://github.com/sangeethsanthosh-git/dayform/releases/tag/v1.0.0)** (ARM64 ~21MB, ARMv7 ~19MB, Universal ~61MB)
 
 ---
 
