@@ -1,0 +1,219 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../../core/theme/app_colors.dart';
+
+class EditorialDateHeader extends StatelessWidget {
+  final DateTime selectedDate;
+  final VoidCallback onReturnToToday;
+
+  const EditorialDateHeader({
+    super.key,
+    required this.selectedDate,
+    required this.onReturnToToday,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final now = DateTime.now();
+    final isToday = selectedDate.year == now.year &&
+        selectedDate.month == now.month &&
+        selectedDate.day == now.day;
+
+    final weekdayStr = DateFormat('EEEE').format(selectedDate);
+    final monthDayFullStr = DateFormat('d MMMM').format(selectedDate);
+    final dayNum = selectedDate.day.toString().padLeft(2, '0');
+    final monthNum = selectedDate.month.toString().padLeft(2, '0');
+    final monthAbbr = DateFormat('MMM').format(selectedDate).toUpperCase();
+
+    // Secondary city time (New York = UTC-4 / UTC-5)
+    final utcNow = now.toUtc();
+    final nyTime = utcNow.subtract(const Duration(hours: 4)); // EDT
+    final nyTimeStr = DateFormat('h:mm a').format(nyTime);
+    final localTimeStr = DateFormat('h:mm a').format(now);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left: Giant Editorial Date (matching Image 1 Left)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    weekdayStr,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '$dayNum.$monthNum',
+                        style: TextStyle(
+                          fontSize: 44,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1.8,
+                          color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+                          height: 1.05,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        monthAbbr,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                          color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  // Full date line for clarity & test compatibility
+                  Text(
+                    monthDayFullStr,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? AppColors.secondaryLightText.withOpacity(0.8) : AppColors.secondaryDarkText.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Right: Dual World Clock Cards (matching Image 1 Left)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildClockCard(
+                  title: 'New York',
+                  time: nyTimeStr,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 6),
+                _buildClockCard(
+                  title: 'Local',
+                  time: localTimeStr,
+                  isDark: isDark,
+                  isLocal: true,
+                ),
+                if (!isToday) ...[
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: onReturnToToday,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white : AppColors.pillBlack,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.today_rounded,
+                            size: 14,
+                            color: isDark ? AppColors.pillBlack : Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Today',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.pillBlack : Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildClockCard({
+    required String title,
+    required String time,
+    required bool isDark,
+    bool isLocal = false,
+  }) {
+    return Container(
+      width: 105,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCardSurface : AppColors.lightCardSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isLocal
+              ? (isDark ? AppColors.warmAmber.withOpacity(0.4) : AppColors.warmAmber)
+              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          width: isLocal ? 1.2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isLocal ? AppColors.warmAmber : Colors.grey,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            time,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

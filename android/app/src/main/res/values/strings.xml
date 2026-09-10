@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dayform</string>
+    <string name="widget_name">Live Date Icon</string>
+    <string name="widget_description">Shows the live real day &amp; date on your home screen</string>
+</resources>
