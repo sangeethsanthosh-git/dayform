@@ -80,24 +80,24 @@ class _MainScaffoldState extends State<MainScaffold> {
           onDestinationSelected: (index) {
             setState(() => _currentIndex = index);
           },
-          destinations: const [
+          destinations: [
             NavigationDestination(
-              icon: Icon(Icons.wb_sunny_outlined),
+              icon: const Icon(Icons.wb_sunny_outlined),
               selectedIcon: Icon(Icons.wb_sunny_rounded, color: AppColors.warmAmberForeground),
               label: 'Today',
             ),
             NavigationDestination(
-              icon: Icon(Icons.calendar_month_outlined),
+              icon: const Icon(Icons.calendar_month_outlined),
               selectedIcon: Icon(Icons.calendar_month_rounded, color: AppColors.warmAmberForeground),
               label: 'Calendar',
             ),
             NavigationDestination(
-              icon: Icon(Icons.check_box_outlined),
+              icon: const Icon(Icons.check_box_outlined),
               selectedIcon: Icon(Icons.check_box_rounded, color: AppColors.warmAmberForeground),
               label: 'Tasks',
             ),
             NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
+              icon: const Icon(Icons.grid_view_outlined),
               selectedIcon: Icon(Icons.grid_view_rounded, color: AppColors.warmAmberForeground),
               label: 'My Space',
             ),

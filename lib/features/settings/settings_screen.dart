@@ -7,6 +7,7 @@ import '../../core/services/widget_service.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../domain/models/user_settings.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -66,7 +67,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       backgroundColor: AppColors.warmAmber.withOpacity(0.3),
                       child: Text(
                         settings.userName.isNotEmpty ? settings.userName[0].toUpperCase() : 'U',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.warmAmberForeground),
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.warmAmberForeground),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -84,7 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 24),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.cake_outlined, color: AppColors.warmAmber),
+                  leading: Icon(Icons.cake_outlined, color: AppColors.warmAmber),
                   title: const Text('Date of Birth'),
                   subtitle: Text(
                     settings.userBirthDate != null
@@ -178,7 +179,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const Divider(height: 28),
+                _buildAccentColorPicker(context, settings, appState, isDark),
+                const Divider(height: 28),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Compact Density'),
@@ -362,11 +365,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: AppColors.warmAmber.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.music_note_rounded, color: AppColors.warmAmberForeground, size: 20),
+                    child: Icon(Icons.music_note_rounded, color: AppColors.warmAmberForeground, size: 20),
                   ),
                   title: const Text('Reminder Alert Tune', style: TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: const Text('Classic Harmonic Chime (Melodic bell tone)'),
-                  trailing: const Icon(Icons.volume_up_rounded, size: 20, color: AppColors.warmAmberForeground),
+                  trailing: Icon(Icons.volume_up_rounded, size: 20, color: AppColors.warmAmberForeground),
                 ),
                 const Divider(height: 16),
 
@@ -416,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.auto_awesome_rounded, color: AppColors.warmAmber),
+                  leading: Icon(Icons.auto_awesome_rounded, color: AppColors.warmAmber),
                   title: const Text('Load Demo Data'),
                   subtitle: const Text('Populate realistic sample events, tasks and bills'),
                   onTap: () async {
@@ -514,6 +517,360 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAccentColorPicker(BuildContext context, UserSettings settings, AppState appState, bool isDark) {
+    final presets = AppColors.presetAccents;
+    final isCustomActive = settings.customAccentColorValue != null;
+    final activeCustomColor = isCustomActive ? Color(settings.customAccentColorValue!) : null;
+
+    String activeColorName;
+    if (isCustomActive) {
+      activeColorName = 'Custom (#${activeCustomColor!.value.toRadixString(16).substring(2).toUpperCase()})';
+    } else {
+      activeColorName = presets[settings.accentColorIndex.clamp(0, presets.length - 1)].name;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Accent & Theme Color', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(
+                  'Replaces gold across the entire app ($activeColorName)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: AppColors.warmAmber,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? Colors.white54 : Colors.black26,
+                  width: 2,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          height: 74,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: presets.length + 1,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              if (index < presets.length) {
+                final preset = presets[index];
+                final isSelected = !isCustomActive && settings.accentColorIndex == index;
+                return GestureDetector(
+                  onTap: () {
+                    appState.updateSettings(
+                      settings.copyWith(
+                        accentColorIndex: index,
+                        clearCustomAccent: true,
+                      ),
+                    );
+                  },
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: preset.color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? (isDark ? Colors.white : AppColors.primaryDarkText)
+                                : Colors.transparent,
+                            width: 2.5,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: preset.color.withOpacity(0.45),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: isSelected
+                            ? Icon(
+                                Icons.check_rounded,
+                                size: 22,
+                                color: preset.color.computeLuminance() > 0.45
+                                    ? AppColors.primaryDarkText
+                                    : Colors.white,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        preset.name.split(' ').first,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected
+                              ? (isDark ? AppColors.primaryLightText : AppColors.primaryDarkText)
+                              : (isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                return GestureDetector(
+                  onTap: () => _showCustomColorPickerSheet(context, settings, appState, isDark),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isCustomActive
+                              ? activeCustomColor
+                              : (isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted),
+                          border: Border.all(
+                            color: isCustomActive
+                                ? (isDark ? Colors.white : AppColors.primaryDarkText)
+                                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                            width: isCustomActive ? 2.5 : 1.5,
+                          ),
+                        ),
+                        child: Icon(
+                          isCustomActive ? Icons.check_rounded : Icons.colorize_rounded,
+                          size: 20,
+                          color: isCustomActive
+                              ? (activeCustomColor!.computeLuminance() > 0.45
+                                  ? AppColors.primaryDarkText
+                                  : Colors.white)
+                              : (isDark ? AppColors.primaryLightText : AppColors.primaryDarkText),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Custom',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isCustomActive ? FontWeight.w700 : FontWeight.w500,
+                          color: isCustomActive
+                              ? (isDark ? AppColors.primaryLightText : AppColors.primaryDarkText)
+                              : (isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCustomColorPickerSheet(BuildContext context, UserSettings settings, AppState appState, bool isDark) {
+    const popularUniversalColors = [
+      Color(0xFFE5BD78), // Classic Gold
+      Color(0xFFF59E0B), // Amber
+      Color(0xFFF97316), // Orange
+      Color(0xFFFF5722), // Deep Orange
+      Color(0xFFEF4444), // Red
+      Color(0xFFEC4899), // Pink
+      Color(0xFFE91E63), // Magenta / Deep Pink
+      Color(0xFF8B5CF6), // Purple
+      Color(0xFF6366F1), // Indigo
+      Color(0xFF3B82F6), // Blue
+      Color(0xFF0284C7), // Light Blue
+      Color(0xFF06B6D4), // Cyan
+      Color(0xFF14B8A6), // Teal
+      Color(0xFF10B981), // Emerald
+      Color(0xFF22C55E), // Green
+      Color(0xFF84CC16), // Lime
+      Color(0xFFEAB308), // Yellow
+      Color(0xFF64748B), // Slate
+      Color(0xFF78716C), // Warm Stone
+      Color(0xFF202320), // Charcoal Dark
+    ];
+
+    Color selectedColor = settings.customAccentColorValue != null
+        ? Color(settings.customAccentColorValue!)
+        : AppColors.warmAmber;
+
+    final hexController = TextEditingController(
+      text: selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase(),
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.darkCardSurface : AppColors.lightCardSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Universal Color Picker',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: selectedColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: isDark ? Colors.white30 : Colors.black12, width: 2),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Select any universal shade or enter a custom hex code',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Palette Grid
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: popularUniversalColors.map((color) {
+                      final isSelected = selectedColor.value == color.value;
+                      return GestureDetector(
+                        onTap: () {
+                          setModalState(() {
+                            selectedColor = color;
+                            hexController.text =
+                                color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase();
+                          });
+                        },
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? (isDark ? Colors.white : AppColors.primaryDarkText)
+                                  : Colors.transparent,
+                              width: 2.5,
+                            ),
+                          ),
+                          child: isSelected
+                              ? Icon(
+                                  Icons.check_rounded,
+                                  size: 20,
+                                  color: color.computeLuminance() > 0.45
+                                      ? AppColors.primaryDarkText
+                                      : Colors.white,
+                                )
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  // Hex code input
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: hexController,
+                          maxLength: 6,
+                          decoration: const InputDecoration(
+                            labelText: 'Hex Color Code',
+                            prefixText: '# ',
+                            counterText: '',
+                            hintText: 'E5BD78',
+                          ),
+                          onChanged: (val) {
+                            if (val.length == 6) {
+                              final intVal = int.tryParse('FF$val', radix: 16);
+                              if (intVal != null) {
+                                setModalState(() {
+                                  selectedColor = Color(intVal);
+                                });
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          appState.updateSettings(
+                            settings.copyWith(
+                              customAccentColorValue: selectedColor.value,
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: selectedColor,
+                          foregroundColor: selectedColor.computeLuminance() > 0.45
+                              ? AppColors.primaryDarkText
+                              : Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Apply Color', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

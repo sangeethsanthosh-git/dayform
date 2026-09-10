@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dayform/core/theme/app_colors.dart';
 import 'package:dayform/core/theme/app_theme.dart';
 import 'package:dayform/domain/models/user_settings.dart';
 import 'package:dayform/features/today/widgets/birthday_celebration_card.dart';
@@ -68,6 +69,33 @@ void main() {
       expect(settings.userName, isEmpty);
       expect(settings.userBirthDate, isNull);
       expect(settings.hasCompletedOnboarding, isFalse);
+      expect(settings.accentColorIndex, 0);
+      expect(settings.customAccentColorValue, isNull);
+    });
+
+    test('Universal accent color updates dynamically for presets and custom hex values', () {
+      // 1. Classic Gold (Default index 0)
+      AppColors.applyAccentFromSettings(const UserSettings(accentColorIndex: 0));
+      expect(AppColors.warmAmber.value, const Color(0xFFE5BD78).value);
+
+      // 2. Sapphire Blue (Preset index 1)
+      AppColors.applyAccentFromSettings(const UserSettings(accentColorIndex: 1));
+      expect(AppColors.warmAmber.value, const Color(0xFF3B82F6).value);
+
+      // 3. Emerald Green (Preset index 2)
+      AppColors.applyAccentFromSettings(const UserSettings(accentColorIndex: 2));
+      expect(AppColors.warmAmber.value, const Color(0xFF10B981).value);
+
+      // 4. Custom Universal Color (e.g. Deep Orange 0xFFFF5722)
+      const customVal = 0xFFFF5722;
+      AppColors.applyAccentFromSettings(
+        const UserSettings(customAccentColorValue: customVal),
+      );
+      expect(AppColors.warmAmber.value, customVal);
+
+      // 5. Revert back to Gold
+      AppColors.applyAccentFromSettings(const UserSettings(accentColorIndex: 0));
+      expect(AppColors.warmAmber.value, const Color(0xFFE5BD78).value);
     });
   });
 }

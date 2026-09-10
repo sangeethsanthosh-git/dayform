@@ -91,7 +91,7 @@ class BirthdaysModule extends StatelessWidget {
                             ? Image.file(File(bday.customImagePath!), width: 44, height: 44, fit: BoxFit.cover)
                             : Text(
                                 bday.personName.isNotEmpty ? bday.personName[0].toUpperCase() : 'B',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.warmAmberForeground,

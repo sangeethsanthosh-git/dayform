@@ -29,6 +29,8 @@ class SettingsRepository {
           key == 'has_completed_onboarding' ||
           key == 'reduced_motion') {
         map[key] = val == '1' ? 1 : 0;
+      } else if (key == 'custom_accent_color_value') {
+        map[key] = int.tryParse(val);
       } else if (key == 'accent_color_index' ||
           key == 'first_day_of_week' ||
           key == 'default_event_duration_minutes' ||

@@ -131,7 +131,7 @@ class ChronologicalAgenda extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.warmAmber,
             ),
@@ -139,7 +139,7 @@ class ChronologicalAgenda extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             'Now: $timeStr',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.warmAmberForeground,

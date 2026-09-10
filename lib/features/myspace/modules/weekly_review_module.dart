@@ -135,7 +135,7 @@ class WeeklyReviewModule extends StatelessWidget {
                 const SnackBar(content: Text('Rescheduled for tomorrow!')),
               );
             },
-            child: const Text('Move to Tomorrow', style: TextStyle(fontSize: 12, color: AppColors.warmAmberForeground)),
+            child: Text('Move to Tomorrow', style: TextStyle(fontSize: 12, color: AppColors.warmAmberForeground)),
           ),
         ],
       ),

@@ -1,6 +1,140 @@
 import 'package:flutter/material.dart';
+import '../../domain/models/user_settings.dart';
+
+class AccentColorOption {
+  final String id;
+  final String name;
+  final Color color;
+  final Color foreground;
+  final Color darkBg;
+
+  const AccentColorOption({
+    required this.id,
+    required this.name,
+    required this.color,
+    required this.foreground,
+    required this.darkBg,
+  });
+}
 
 class AppColors {
+  // --- Curated Universal Color Presets ---
+  static const List<AccentColorOption> presetAccents = [
+    AccentColorOption(
+      id: 'gold',
+      name: 'Classic Gold',
+      color: Color(0xFFE5BD78),
+      foreground: Color(0xFF5A3D0B),
+      darkBg: Color(0xFF362B18),
+    ),
+    AccentColorOption(
+      id: 'sapphire',
+      name: 'Sapphire Blue',
+      color: Color(0xFF3B82F6),
+      foreground: Color(0xFF1E3A8A),
+      darkBg: Color(0xFF172554),
+    ),
+    AccentColorOption(
+      id: 'emerald',
+      name: 'Emerald Green',
+      color: Color(0xFF10B981),
+      foreground: Color(0xFF064E3B),
+      darkBg: Color(0xFF052E16),
+    ),
+    AccentColorOption(
+      id: 'ruby',
+      name: 'Ruby Red',
+      color: Color(0xFFEF4444),
+      foreground: Color(0xFF7F1D1D),
+      darkBg: Color(0xFF450A0A),
+    ),
+    AccentColorOption(
+      id: 'amethyst',
+      name: 'Amethyst Purple',
+      color: Color(0xFF8B5CF6),
+      foreground: Color(0xFF4C1D95),
+      darkBg: Color(0xFF2E1065),
+    ),
+    AccentColorOption(
+      id: 'coral',
+      name: 'Sunset Coral',
+      color: Color(0xFFF97316),
+      foreground: Color(0xFF7C2D12),
+      darkBg: Color(0xFF431407),
+    ),
+    AccentColorOption(
+      id: 'rose',
+      name: 'Rose Pink',
+      color: Color(0xFFEC4899),
+      foreground: Color(0xFF831843),
+      darkBg: Color(0xFF500724),
+    ),
+    AccentColorOption(
+      id: 'teal',
+      name: 'Ocean Teal',
+      color: Color(0xFF14B8A6),
+      foreground: Color(0xFF134E4A),
+      darkBg: Color(0xFF042F2E),
+    ),
+    AccentColorOption(
+      id: 'indigo',
+      name: 'Midnight Indigo',
+      color: Color(0xFF6366F1),
+      foreground: Color(0xFF312E81),
+      darkBg: Color(0xFF1E1B4B),
+    ),
+    AccentColorOption(
+      id: 'slate',
+      name: 'Graphite Slate',
+      color: Color(0xFF64748B),
+      foreground: Color(0xFF0F172A),
+      darkBg: Color(0xFF1E293B),
+    ),
+  ];
+
+  // --- Dynamic Active Accent State ---
+  static Color _activeAccent = const Color(0xFFE5BD78);
+  static Color _activeForeground = const Color(0xFF5A3D0B);
+  static Color _activeDarkBg = const Color(0xFF362B18);
+
+  // Dynamic getters replacing hardcoded gold warmAmber across entire codebase
+  static Color get warmAmber => _activeAccent;
+  static Color get warmAmberForeground => _activeForeground;
+  static Color get warmAmberDarkBg => _activeDarkBg;
+
+  // Clean alias getters
+  static Color get accent => _activeAccent;
+  static Color get accentForeground => _activeForeground;
+  static Color get accentDarkBg => _activeDarkBg;
+
+  // Set active accent color with automatic contrast calculation
+  static void setAccentColor(Color color, [Color? foreground, Color? darkBg]) {
+    _activeAccent = color;
+    if (foreground != null) {
+      _activeForeground = foreground;
+    } else {
+      _activeForeground = color.computeLuminance() > 0.45 ? const Color(0xFF202320) : Colors.white;
+    }
+    if (darkBg != null) {
+      _activeDarkBg = darkBg;
+    } else {
+      _activeDarkBg = Color.alphaBlend(color.withOpacity(0.2), const Color(0xFF171A18));
+    }
+  }
+
+  // Synchronize active accent with UserSettings
+  static void applyAccentFromSettings(UserSettings settings) {
+    if (settings.customAccentColorValue != null) {
+      setAccentColor(Color(settings.customAccentColorValue!));
+    } else if (settings.accentColorIndex >= 0 && settings.accentColorIndex < presetAccents.length) {
+      final opt = presetAccents[settings.accentColorIndex];
+      setAccentColor(opt.color, opt.foreground, opt.darkBg);
+    } else {
+      final opt = presetAccents[0];
+      setAccentColor(opt.color, opt.foreground, opt.darkBg);
+    }
+  }
+
   // --- Core Neutrals (from Brief) ---
   static const Color lightBackground = Color(0xFFF4F3EE);
   static const Color lightCardSurface = Color(0xFFFFFFFF);
@@ -23,7 +157,6 @@ class AppColors {
   static const Color dustyRose = Color(0xFFD6A6AF);
   static const Color sage = Color(0xFFC4D0AD);
   static const Color teal = Color(0xFFA7CFCA);
-  static const Color warmAmber = Color(0xFFE5BD78);
   static const Color slate = Color(0xFFCAD2C5);
 
   static const Color pillBlack = Color(0xFF1E211E);
@@ -34,14 +167,12 @@ class AppColors {
   static const Color dustyRoseForeground = Color(0xFF5B2B35);
   static const Color sageForeground = Color(0xFF34431D);
   static const Color tealForeground = Color(0xFF184742);
-  static const Color warmAmberForeground = Color(0xFF5A3D0B);
 
   // --- Dark Mode Category Tint Surfaces (Restrained & Deep) ---
   static const Color lavenderDarkBg = Color(0xFF2A2536);
   static const Color dustyRoseDarkBg = Color(0xFF382327);
   static const Color sageDarkBg = Color(0xFF272F20);
   static const Color tealDarkBg = Color(0xFF1F2E2C);
-  static const Color warmAmberDarkBg = Color(0xFF362B18);
 
   // --- Semantic Highlights ---
   static const Color success = Color(0xFF528C59);

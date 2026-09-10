@@ -370,7 +370,7 @@ class MonthTimelineView extends StatelessWidget {
                       color: AppColors.warmAmber.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Pay',
                       style: TextStyle(
                         fontSize: 11,

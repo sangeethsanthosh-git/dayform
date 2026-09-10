@@ -140,7 +140,7 @@ class AppTheme {
           return null;
         }),
         todayForegroundColor: WidgetStateProperty.all(AppColors.warmAmberForeground),
-        todayBorder: const BorderSide(color: AppColors.warmAmber, width: 1.5),
+        todayBorder: BorderSide(color: AppColors.warmAmber, width: 1.5),
         yearForegroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return Colors.white;
           return AppColors.primaryDarkText;
@@ -258,7 +258,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConstants.cardRadiusSmall),
-          borderSide: const BorderSide(color: AppColors.warmAmber, width: 1.5),
+          borderSide: BorderSide(color: AppColors.warmAmber, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
@@ -314,7 +314,7 @@ class AppTheme {
           return null;
         }),
         todayForegroundColor: WidgetStateProperty.all(AppColors.warmAmber),
-        todayBorder: const BorderSide(color: AppColors.warmAmber, width: 1.5),
+        todayBorder: BorderSide(color: AppColors.warmAmber, width: 1.5),
         yearForegroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return AppColors.pillBlack;
           return AppColors.primaryLightText;

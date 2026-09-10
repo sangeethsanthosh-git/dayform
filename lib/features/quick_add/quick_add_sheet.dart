@@ -315,7 +315,7 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
             controller: _naturalInputController,
             decoration: InputDecoration(
               hintText: 'e.g. Submit assignment tomorrow at 6 pm',
-              prefixIcon: const Icon(Icons.auto_awesome, size: 18, color: AppColors.warmAmber),
+              prefixIcon: Icon(Icons.auto_awesome, size: 18, color: AppColors.warmAmber),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                 onPressed: () => _applyNaturalLanguageParse(_naturalInputController.text),
@@ -621,7 +621,7 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
                                       backgroundColor: AppColors.warmAmber.withOpacity(0.35),
                                       child: Text(
                                         '${idx + 1}',
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.warmAmberForeground),
+                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.warmAmberForeground),
                                       ),
                                     ),
                                   ),

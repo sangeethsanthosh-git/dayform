@@ -134,7 +134,7 @@ class DayView extends StatelessWidget {
                         Container(
                           width: 10,
                           height: 10,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.warmAmber,
                           ),

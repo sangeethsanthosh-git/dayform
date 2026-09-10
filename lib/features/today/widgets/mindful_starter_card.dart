@@ -43,7 +43,7 @@ class MindfulStarterCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: AppColors.warmAmber.withOpacity(0.25),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.wb_sunny_rounded,
                 color: AppColors.warmAmberForeground,
                 size: 24,

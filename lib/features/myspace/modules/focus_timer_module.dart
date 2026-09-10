@@ -255,7 +255,7 @@ class _FocusTimerModuleState extends State<FocusTimerModule> {
                 return ListTile(
                   tileColor: isDark ? AppColors.darkCardSurface : AppColors.lightCardSurface,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  leading: const Icon(Icons.timer_rounded, color: AppColors.warmAmber),
+                  leading: Icon(Icons.timer_rounded, color: AppColors.warmAmber),
                   title: Text(s.taskTitle ?? 'General Focus Session'),
                   subtitle: Text(DateFormat('d MMM, h:mm a').format(s.startedAt)),
                   trailing: Text('${s.durationMinutes}m', style: const TextStyle(fontWeight: FontWeight.bold)),

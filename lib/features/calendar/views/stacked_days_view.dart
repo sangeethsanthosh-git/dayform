@@ -176,7 +176,7 @@ class StackedDaysView extends StatelessWidget {
                                 Container(
                                   width: 6,
                                   height: 6,
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: AppColors.warmAmber,
                                   ),

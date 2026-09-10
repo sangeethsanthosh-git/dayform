@@ -26,7 +26,7 @@ class CategoryDefinitions {
     icon: Icons.work_outline_rounded,
   );
 
-  static const CategoryItem personal = CategoryItem(
+  static CategoryItem get personal => CategoryItem(
     id: 'personal',
     name: 'Personal',
     color: AppColors.warmAmber,
@@ -66,7 +66,7 @@ class CategoryDefinitions {
     icon: Icons.celebration_outlined,
   );
 
-  static const List<CategoryItem> all = [
+  static List<CategoryItem> get all => [
     work,
     personal,
     study,

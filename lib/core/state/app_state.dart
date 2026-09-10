@@ -16,6 +16,7 @@ import '../../domain/repositories/task_repository.dart';
 import '../database/app_database.dart';
 import '../database/sample_data.dart';
 import '../notifications/notification_service.dart';
+import '../theme/app_colors.dart';
 import '../widget/home_widget_service.dart';
 
 class AppState extends ChangeNotifier {
@@ -101,6 +102,7 @@ class AppState extends ChangeNotifier {
 
     // 1. Load user settings
     _settings = await settingsRepo.getSettings();
+    AppColors.applyAccentFromSettings(_settings);
 
     // 2. Refresh all domain data (starts clean for fresh install)
     await refreshAll();
@@ -322,6 +324,7 @@ class AppState extends ChangeNotifier {
   // --- Settings ---
   Future<void> updateSettings(UserSettings newSettings) async {
     _settings = newSettings;
+    AppColors.applyAccentFromSettings(newSettings);
     await settingsRepo.saveSettings(newSettings);
     notifyListeners();
   }

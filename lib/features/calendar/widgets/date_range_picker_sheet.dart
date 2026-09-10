@@ -74,7 +74,7 @@ class _DateRangePickerSheetState extends State<DateRangePickerSheet> {
           const SizedBox(height: 6),
           Text(
             rangeLabel,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.warmAmberForeground,
@@ -169,15 +169,15 @@ class _DateRangePickerSheetState extends State<DateRangePickerSheet> {
 
       BoxDecoration decoration;
       if (isStart && isEnd) {
-        decoration = const BoxDecoration(shape: BoxShape.circle, color: AppColors.warmAmber);
+        decoration = BoxDecoration(shape: BoxShape.circle, color: AppColors.warmAmber);
       } else if (isStart) {
-        decoration = const BoxDecoration(
-          borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
+        decoration = BoxDecoration(
+          borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
           color: AppColors.warmAmber,
         );
       } else if (isEnd) {
-        decoration = const BoxDecoration(
-          borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
+        decoration = BoxDecoration(
+          borderRadius: const BorderRadius.horizontal(right: Radius.circular(20)),
           color: AppColors.warmAmber,
         );
       } else if (isInRange) {

@@ -54,7 +54,7 @@ class BillsModule extends StatelessWidget {
                     ),
                     IconButton(
                       onPressed: onAddBill,
-                      icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.warmAmber),
+                      icon: Icon(Icons.add_circle_outline_rounded, color: AppColors.warmAmber),
                     ),
                   ],
                 ),

@@ -7,6 +7,7 @@ class UserSettings {
   final bool hasCompletedOnboarding;
   final String themeMode; // 'system', 'light', 'dark'
   final int accentColorIndex;
+  final int? customAccentColorValue;
   final int firstDayOfWeek; // 1 = Mon, 7 = Sun
   final bool is24Hour;
   final String dateFormat; // 'd MMM yyyy', 'MMM d, yyyy', 'yyyy-MM-dd'
@@ -32,6 +33,7 @@ class UserSettings {
     this.hasCompletedOnboarding = false,
     this.themeMode = 'system',
     this.accentColorIndex = 0,
+    this.customAccentColorValue,
     this.firstDayOfWeek = 1, // Default Monday
     this.is24Hour = false,
     this.dateFormat = 'd MMM yyyy',
@@ -70,6 +72,8 @@ class UserSettings {
     bool? hasCompletedOnboarding,
     String? themeMode,
     int? accentColorIndex,
+    int? customAccentColorValue,
+    bool clearCustomAccent = false,
     int? firstDayOfWeek,
     bool? is24Hour,
     String? dateFormat,
@@ -95,6 +99,9 @@ class UserSettings {
       hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
       themeMode: themeMode ?? this.themeMode,
       accentColorIndex: accentColorIndex ?? this.accentColorIndex,
+      customAccentColorValue: clearCustomAccent
+          ? null
+          : (customAccentColorValue ?? this.customAccentColorValue),
       firstDayOfWeek: firstDayOfWeek ?? this.firstDayOfWeek,
       is24Hour: is24Hour ?? this.is24Hour,
       dateFormat: dateFormat ?? this.dateFormat,
@@ -123,6 +130,7 @@ class UserSettings {
       'has_completed_onboarding': hasCompletedOnboarding ? 1 : 0,
       'theme_mode': themeMode,
       'accent_color_index': accentColorIndex,
+      'custom_accent_color_value': customAccentColorValue,
       'first_day_of_week': firstDayOfWeek,
       'is_24_hour': is24Hour ? 1 : 0,
       'date_format': dateFormat,
@@ -171,6 +179,7 @@ class UserSettings {
       hasCompletedOnboarding: resolvedOnboarding,
       themeMode: map['theme_mode'] as String? ?? 'system',
       accentColorIndex: map['accent_color_index'] as int? ?? 0,
+      customAccentColorValue: map['custom_accent_color_value'] as int?,
       firstDayOfWeek: map['first_day_of_week'] as int? ?? 1,
       is24Hour: (map['is_24_hour'] as int? ?? 0) == 1,
       dateFormat: map['date_format'] as String? ?? 'd MMM yyyy',

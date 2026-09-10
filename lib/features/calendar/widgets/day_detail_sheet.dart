@@ -51,7 +51,7 @@ class DayDetailSheet extends StatelessWidget {
                 children: [
                   Text(
                     DateFormat('EEEE').format(date),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.warmAmberForeground,
@@ -135,7 +135,7 @@ class DayDetailSheet extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.cake_outlined, color: AppColors.warmAmber, size: 20),
+          Icon(Icons.cake_outlined, color: AppColors.warmAmber, size: 20),
           const SizedBox(width: 10),
           Text(
             "${b.personName}'s Birthday",

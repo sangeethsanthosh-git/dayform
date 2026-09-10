@@ -48,7 +48,7 @@ class _MySpaceScreenState extends State<MySpaceScreen> {
                   ),
                   IconButton(
                     onPressed: () => _openQuickAdd(context),
-                    icon: const Icon(Icons.add_circle_rounded, size: 28, color: AppColors.warmAmber),
+                    icon: Icon(Icons.add_circle_rounded, size: 28, color: AppColors.warmAmber),
                   ),
                 ],
               ),

@@ -264,7 +264,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
+                            borderSide: BorderSide(
                               color: AppColors.warmAmber,
                               width: 1.8,
                             ),
