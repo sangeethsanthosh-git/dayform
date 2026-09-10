@@ -6,6 +6,7 @@ import '../../core/notifications/notification_service.dart';
 import '../../core/services/widget_service.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -100,11 +101,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     DateTime initial = settings.userBirthDate != null
                         ? DateTime.parse(settings.userBirthDate!)
                         : DateTime(2000, 1, 1);
+                    final isDark = Theme.of(context).brightness == Brightness.dark;
                     final picked = await showDatePicker(
                       context: context,
                       initialDate: initial,
                       firstDate: DateTime(1900),
                       lastDate: DateTime.now(),
+                      builder: (context, child) {
+                        return Theme(
+                          data: isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
+                          child: child!,
+                        );
+                      },
                     );
                     if (picked != null) {
                       final str =

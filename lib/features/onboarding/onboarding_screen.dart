@@ -4,6 +4,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../domain/models/birthday_item.dart';
 import '../navigation/main_scaffold.dart';
 
@@ -37,15 +38,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       lastDate: now,
       helpText: 'SELECT YOUR DATE OF BIRTH',
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.warmAmber,
-              onPrimary: Colors.white,
-              surface: Theme.of(context).cardTheme.color ?? Colors.white,
-              onSurface: AppColors.primaryDarkText,
-            ),
-          ),
+          data: isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
           child: child!,
         );
       },
@@ -127,10 +122,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Top Theme Toggle Action
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    onPressed: () {
+                      final newMode = isDark ? 'light' : 'dark';
+                      widget.appState.updateSettings(
+                        widget.appState.settings.copyWith(themeMode: newMode),
+                      );
+                    },
+                    icon: Icon(
+                      isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                      color: isDark ? AppColors.warmAmber : AppColors.primaryDarkText,
+                      size: 22,
+                    ),
+                    tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                    style: IconButton.styleFrom(
+                      backgroundColor: cardBg,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
                 // 3D Emblem Header
                 Container(
                   width: 90,
@@ -151,7 +175,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     fit: BoxFit.cover,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Welcome Heading
                 Text(
@@ -172,7 +196,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
 
                 // Setup Card
                 Container(
@@ -182,11 +206,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     borderRadius: BorderRadius.circular(AppConstants.cardRadiusLarge),
                     border: Border.all(
                       color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      width: 1.2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 14,
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                        blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
                     ],
@@ -200,7 +225,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                          color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
                           letterSpacing: 0.2,
                         ),
                       ),
@@ -208,6 +233,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       TextField(
                         controller: _nameController,
                         textCapitalization: TextCapitalization.words,
+                        cursorColor: AppColors.warmAmber,
                         onChanged: (_) {
                           if (_errorMessage != null) {
                             setState(() => _errorMessage = null);
@@ -220,12 +246,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         decoration: InputDecoration(
                           hintText: 'Enter your name',
-                          prefixIcon: const Icon(Icons.person_outline_rounded, size: 20),
+                          hintStyle: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                            color: isDark
+                                ? AppColors.secondaryLightText.withOpacity(0.7)
+                                : AppColors.secondaryDarkText.withOpacity(0.7),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.person_outline_rounded,
+                            size: 20,
+                            color: isDark ? AppColors.warmAmber : AppColors.secondaryDarkText,
+                          ),
                           filled: true,
                           fillColor: isDark ? AppColors.darkSurfaceMuted : const Color(0xFFF7F6F2),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
+                            borderSide: BorderSide(
+                              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmAmber,
+                              width: 1.8,
+                            ),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         ),
@@ -238,7 +292,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                          color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
                           letterSpacing: 0.2,
                         ),
                       ),
@@ -252,9 +306,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: _selectedBirthDate != null
-                                  ? AppColors.warmAmber.withOpacity(0.5)
-                                  : Colors.transparent,
-                              width: 1.2,
+                                  ? AppColors.warmAmber
+                                  : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                              width: _selectedBirthDate != null ? 1.6 : 1,
                             ),
                           ),
                           child: Row(
@@ -264,7 +318,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 size: 20,
                                 color: _selectedBirthDate != null
                                     ? AppColors.warmAmber
-                                    : (isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText),
+                                    : (isDark ? AppColors.warmAmber.withOpacity(0.8) : AppColors.secondaryDarkText),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -286,7 +340,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               Icon(
                                 Icons.calendar_month_rounded,
                                 size: 18,
-                                color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                                color: isDark ? AppColors.warmAmber : AppColors.secondaryDarkText,
                               ),
                             ],
                           ),
@@ -297,7 +351,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.celebration_rounded, size: 14, color: AppColors.warmAmberForeground),
+                          Icon(
+                            Icons.celebration_rounded,
+                            size: 14,
+                            color: isDark ? AppColors.warmAmber : AppColors.warmAmberForeground,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -334,14 +392,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: ElevatedButton(
                     onPressed: _completeOnboarding,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? Colors.white : AppColors.pillBlack,
+                      backgroundColor: isDark ? AppColors.warmAmber : AppColors.pillBlack,
                       foregroundColor: isDark ? AppColors.pillBlack : Colors.white,
-                      elevation: 2,
+                      elevation: isDark ? 0 : 2,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(22),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
@@ -350,10 +408,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.2,
+                            color: isDark ? AppColors.pillBlack : Colors.white,
                           ),
                         ),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_rounded, size: 18),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
+                          color: isDark ? AppColors.pillBlack : Colors.white,
+                        ),
                       ],
                     ),
                   ),
