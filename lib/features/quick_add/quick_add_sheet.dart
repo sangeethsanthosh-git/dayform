@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/category_definitions.dart';
@@ -65,11 +66,28 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
     _selectedDate = widget.initialDate ?? widget.appState.selectedDate;
     _selectedCurrency = widget.appState.settings.currency;
     _durationMinutes = widget.appState.settings.defaultEventDurationMinutes;
-    _reminderOffset = widget.appState.settings.defaultReminderMinutesBefore;
+
+    // For Reminder tab (index 2), default to 0 ('At time') so it rings at the exact time set
+    _reminderOffset = widget.initialTabIndex == 2 ? 0 : widget.appState.settings.defaultReminderMinutesBefore;
+
+    // Default _selectedTime to next upcoming 10-minute mark so it is never in the past
+    final now = DateTime.now();
+    final nextUpcoming = now.add(const Duration(minutes: 10));
+    _selectedTime = TimeOfDay(hour: nextUpcoming.hour, minute: nextUpcoming.minute);
+
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    if (_tabController.index == 2 && _reminderOffset != 0) {
+      setState(() => _reminderOffset = 0);
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _naturalInputController.dispose();
     _titleController.dispose();
@@ -154,8 +172,19 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
     );
     final endDt = startDt.add(Duration(minutes: _durationMinutes));
 
+    // For Reminder tab, ensure the scheduled time is upcoming
+    if (_tabController.index == 2 && startDt.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ Scheduled reminder time has already passed today. Please pick an upcoming time.'),
+          backgroundColor: AppColors.dustyRose,
+        ),
+      );
+      return;
+    }
+
     if (_reminderOffset >= 0) {
-      NotificationService.instance.requestPermissions();
+      await NotificationService.instance.requestPermissions();
     }
 
     switch (_tabController.index) {
@@ -256,10 +285,32 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
         break;
     }
 
+    // Audible confirmation tone & haptic response
+    if (_reminderOffset >= 0) {
+      await SystemSound.play(SystemSoundType.alert);
+      await HapticFeedback.mediumImpact();
+    }
+
     if (mounted) {
       Navigator.pop(context);
+      final formattedTime = DateFormat.jm().format(startDt);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Added "$title" to Dayform!')),
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _tabController.index == 2
+                      ? 'Reminder scheduled for $formattedTime with chime alert 🔔'
+                      : 'Saved "$title" with reminder alert',
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 3),
+        ),
       );
     }
   }
@@ -432,7 +483,45 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
                         ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 6),
+
+                  // Past time helper warning if scheduled for earlier today
+                  Builder(
+                    builder: (context) {
+                      final now = DateTime.now();
+                      final isToday = _selectedDate.year == now.year &&
+                          _selectedDate.month == now.month &&
+                          _selectedDate.day == now.day;
+                      if (isToday) {
+                        final scheduledDt = DateTime(
+                          _selectedDate.year,
+                          _selectedDate.month,
+                          _selectedDate.day,
+                          _selectedTime.hour,
+                          _selectedTime.minute,
+                        );
+                        if (scheduledDt.isBefore(now)) {
+                          return const Padding(
+                            padding: EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline_rounded, size: 14, color: AppColors.dustyRose),
+                                SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'This time has passed today. Please pick an upcoming time.',
+                                    style: TextStyle(fontSize: 11, color: AppColors.dustyRose, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                  const SizedBox(height: 6),
 
                   // Category Selector
                   Row(
@@ -485,6 +574,38 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
                                 'Reminder Alert',
                                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                               ),
+                              const Spacer(),
+                              InkWell(
+                                onTap: () async {
+                                  await NotificationService.instance.playChimePreview();
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('🔔 Testing reminder alert chime...'),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.volume_up_rounded, size: 15, color: AppColors.warmAmber),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Play Tone',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.warmAmber,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 6),
@@ -515,6 +636,9 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
                                     onSelected: (selected) {
                                       if (selected) {
                                         setState(() => _reminderOffset = val);
+                                        if (val >= 0) {
+                                          NotificationService.instance.playChimePreview();
+                                        }
                                       }
                                     },
                                   ),

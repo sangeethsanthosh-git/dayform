@@ -126,17 +126,22 @@ class AppState extends ChangeNotifier {
     // 1. Events & Reminders
     for (final event in _allEvents) {
       if (event.reminderMinutesBefore != null && event.startDateTime.isAfter(now)) {
-        final reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
-        final isReminder = event.title.toLowerCase().startsWith('reminder');
-        await NotificationService.instance.scheduleNotification(
-          id: event.id.hashCode,
-          title: isReminder ? event.title : 'Upcoming: ${event.title}',
-          body: isReminder
-              ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
-              : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
-          scheduledDate: reminderTime,
-          payload: 'event_${event.id}',
-        );
+        var reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
+        if (reminderTime.isBefore(now)) {
+          reminderTime = event.startDateTime;
+        }
+        if (reminderTime.isAfter(now)) {
+          final isReminder = event.title.toLowerCase().startsWith('reminder');
+          await NotificationService.instance.scheduleNotification(
+            id: event.id.hashCode,
+            title: isReminder ? event.title : 'Upcoming: ${event.title}',
+            body: isReminder
+                ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
+                : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
+            scheduledDate: reminderTime,
+            payload: 'event_${event.id}',
+          );
+        }
       }
     }
 
@@ -146,7 +151,10 @@ class AppState extends ChangeNotifier {
       if (!task.isCompleted && task.dueDate != null && task.reminderMinutesBefore != null) {
         final dueDateTime = DateTime.tryParse("${task.dueDate} ${task.dueTime ?? '09:00'}:00");
         if (dueDateTime != null && dueDateTime.isAfter(now)) {
-          final reminderTime = dueDateTime.subtract(Duration(minutes: task.reminderMinutesBefore!));
+          var reminderTime = dueDateTime.subtract(Duration(minutes: task.reminderMinutesBefore!));
+          if (reminderTime.isBefore(now)) {
+            reminderTime = dueDateTime;
+          }
           if (reminderTime.isAfter(now)) {
             await NotificationService.instance.scheduleNotification(
               id: task.id.hashCode,
@@ -286,16 +294,23 @@ class AppState extends ChangeNotifier {
   Future<void> addEvent(EventItem event) async {
     await scheduleRepo.insertEvent(event);
     if (event.reminderMinutesBefore != null) {
-      final reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
-      final isReminder = event.title.toLowerCase().startsWith('reminder');
-      await NotificationService.instance.scheduleNotification(
-        id: event.id.hashCode,
-        title: isReminder ? event.title : 'Upcoming: ${event.title}',
-        body: isReminder
-            ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
-            : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
-        scheduledDate: reminderTime,
-      );
+      final now = DateTime.now();
+      var reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
+      if (reminderTime.isBefore(now) && event.startDateTime.isAfter(now)) {
+        reminderTime = event.startDateTime;
+      }
+      if (reminderTime.isAfter(now)) {
+        final isReminder = event.title.toLowerCase().startsWith('reminder');
+        await NotificationService.instance.scheduleNotification(
+          id: event.id.hashCode,
+          title: isReminder ? event.title : 'Upcoming: ${event.title}',
+          body: isReminder
+              ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
+              : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
+          scheduledDate: reminderTime,
+          payload: 'event_${event.id}',
+        );
+      }
     }
     await refreshAll();
   }
@@ -304,16 +319,23 @@ class AppState extends ChangeNotifier {
     await scheduleRepo.updateEvent(event);
     await NotificationService.instance.cancelNotification(event.id.hashCode);
     if (event.reminderMinutesBefore != null) {
-      final reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
-      final isReminder = event.title.toLowerCase().startsWith('reminder');
-      await NotificationService.instance.scheduleNotification(
-        id: event.id.hashCode,
-        title: isReminder ? event.title : 'Upcoming: ${event.title}',
-        body: isReminder
-            ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
-            : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
-        scheduledDate: reminderTime,
-      );
+      final now = DateTime.now();
+      var reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
+      if (reminderTime.isBefore(now) && event.startDateTime.isAfter(now)) {
+        reminderTime = event.startDateTime;
+      }
+      if (reminderTime.isAfter(now)) {
+        final isReminder = event.title.toLowerCase().startsWith('reminder');
+        await NotificationService.instance.scheduleNotification(
+          id: event.id.hashCode,
+          title: isReminder ? event.title : 'Upcoming: ${event.title}',
+          body: isReminder
+              ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
+              : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
+          scheduledDate: reminderTime,
+          payload: 'event_${event.id}',
+        );
+      }
     }
     await refreshAll();
   }
@@ -340,13 +362,20 @@ class AppState extends ChangeNotifier {
     if (task.dueDate != null && task.reminderMinutesBefore != null) {
       final dueDateTime = DateTime.tryParse("${task.dueDate} ${task.dueTime ?? '09:00'}:00");
       if (dueDateTime != null) {
-        final reminderTime = dueDateTime.subtract(Duration(minutes: task.reminderMinutesBefore!));
-        await NotificationService.instance.scheduleNotification(
-          id: task.id.hashCode,
-          title: 'Task Reminder: ${task.title}',
-          body: task.notes ?? 'Scheduled for today',
-          scheduledDate: reminderTime,
-        );
+        final now = DateTime.now();
+        var reminderTime = dueDateTime.subtract(Duration(minutes: task.reminderMinutesBefore!));
+        if (reminderTime.isBefore(now) && dueDateTime.isAfter(now)) {
+          reminderTime = dueDateTime;
+        }
+        if (reminderTime.isAfter(now)) {
+          await NotificationService.instance.scheduleNotification(
+            id: task.id.hashCode,
+            title: 'Task Reminder: ${task.title}',
+            body: task.notes ?? 'Scheduled for today',
+            scheduledDate: reminderTime,
+            payload: 'task_${task.id}',
+          );
+        }
       }
     }
     await refreshAll();

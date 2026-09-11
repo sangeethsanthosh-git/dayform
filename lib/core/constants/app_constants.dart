@@ -8,9 +8,9 @@ class AppConstants {
   static const int databaseVersion = 1;
 
   // Notification Channels
-  static const String reminderChannelId = 'dayform_reminders_tune';
-  static const String reminderChannelName = 'Dayform Reminders & Chimes';
-  static const String reminderChannelDesc = 'Important reminders, tasks and milestone alerts with custom chime sound';
+  static const String reminderChannelId = 'dayform_reminders_chime_v2';
+  static const String reminderChannelName = 'Dayform Reminders & Alarms';
+  static const String reminderChannelDesc = 'Loud chime alert for time-sensitive reminders, tasks and calendar events';
 
   // Layout & Styling constants
   static const double cardRadiusLarge = 28.0;

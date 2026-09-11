@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -20,9 +21,28 @@ class NotificationService {
     tz.initializeTimeZones();
     try {
       final info = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(info.identifier));
+      final id = info.identifier;
+      try {
+        tz.setLocalLocation(tz.getLocation(id));
+      } catch (_) {
+        // Fallback matching by UTC offset
+        final offset = DateTime.now().timeZoneOffset;
+        for (final loc in tz.timeZoneDatabase.locations.values) {
+          if (loc.currentTimeZone.offset == offset) {
+            tz.setLocalLocation(loc);
+            break;
+          }
+        }
+      }
     } catch (e) {
-      debugPrint('Could not set system timezone ($e), falling back to default.');
+      debugPrint('Could not set system timezone ($e), matching by device offset.');
+      final offset = DateTime.now().timeZoneOffset;
+      for (final loc in tz.timeZoneDatabase.locations.values) {
+        if (loc.currentTimeZone.offset == offset) {
+          tz.setLocalLocation(loc);
+          break;
+        }
+      }
     }
 
     // Android Setup
@@ -53,6 +73,12 @@ class NotificationService {
       final androidImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
       if (androidImpl != null) {
+        // Clear any old or stale channels so fresh channel settings apply
+        try {
+          await androidImpl.deleteNotificationChannel(channelId: 'dayform_reminders_tune');
+          await androidImpl.deleteNotificationChannel(channelId: 'dayform_reminders');
+        } catch (_) {}
+
         const AndroidNotificationChannel channel = AndroidNotificationChannel(
           AppConstants.reminderChannelId,
           AppConstants.reminderChannelName,
@@ -61,6 +87,7 @@ class NotificationService {
           playSound: true,
           sound: RawResourceAndroidNotificationSound('reminder_chime'),
           enableVibration: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
         );
         await androidImpl.createNotificationChannel(channel);
       }
@@ -115,34 +142,42 @@ class NotificationService {
     final now = DateTime.now();
     DateTime effectiveDate = scheduledDate;
 
-    // If the scheduled date is slightly in the past (within 10 mins),
-    // schedule it 3 seconds from now so the user receives the alert.
+    // Do not schedule notifications for times already in the past
     if (effectiveDate.isBefore(now)) {
-      if (effectiveDate.isAfter(now.subtract(const Duration(minutes: 10)))) {
-        effectiveDate = now.add(const Duration(seconds: 3));
-      } else {
-        return; // Truly in the past, do not schedule
-      }
+      return;
     }
 
     final tzNow = tz.TZDateTime.now(tz.local);
-    var tzScheduledDate = tz.TZDateTime.from(effectiveDate, tz.local);
+    final tzScheduledDate = tz.TZDateTime(
+      tz.local,
+      effectiveDate.year,
+      effectiveDate.month,
+      effectiveDate.day,
+      effectiveDate.hour,
+      effectiveDate.minute,
+      effectiveDate.second,
+    );
+
     // Exact alarms on Android MUST be strictly in the future
-    if (tzScheduledDate.isBefore(tzNow) || tzScheduledDate.difference(tzNow).inSeconds < 2) {
-      tzScheduledDate = tzNow.add(const Duration(seconds: 3));
+    if (tzScheduledDate.isBefore(tzNow) || tzScheduledDate.difference(tzNow).inSeconds < 1) {
+      return;
     }
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       AppConstants.reminderChannelId,
       AppConstants.reminderChannelName,
       channelDescription: AppConstants.reminderChannelDesc,
       importance: Importance.max,
-      priority: Priority.high,
+      priority: Priority.max,
       showWhen: true,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('reminder_chime'),
+      sound: const RawResourceAndroidNotificationSound('reminder_chime'),
       enableVibration: true,
-      actions: <AndroidNotificationAction>[
+      vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      category: AndroidNotificationCategory.alarm,
+      fullScreenIntent: true,
+      actions: const <AndroidNotificationAction>[
         AndroidNotificationAction(
           'action_snooze',
           'Snooze 10m',
@@ -156,9 +191,9 @@ class NotificationService {
       ],
     );
 
-    const NotificationDetails notificationDetails = NotificationDetails(
+    final NotificationDetails notificationDetails = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(
+      iOS: const DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
@@ -254,20 +289,24 @@ class NotificationService {
     }
     await requestPermissions();
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       AppConstants.reminderChannelId,
       AppConstants.reminderChannelName,
       channelDescription: AppConstants.reminderChannelDesc,
       importance: Importance.max,
-      priority: Priority.high,
+      priority: Priority.max,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('reminder_chime'),
+      sound: const RawResourceAndroidNotificationSound('reminder_chime'),
       enableVibration: true,
+      vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      category: AndroidNotificationCategory.alarm,
+      fullScreenIntent: true,
     );
 
-    const NotificationDetails details = NotificationDetails(
+    final NotificationDetails details = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(
+      iOS: const DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
@@ -284,6 +323,17 @@ class NotificationService {
       );
     } catch (e) {
       debugPrint('Error showing immediate test notification: $e');
+    }
+  }
+
+  // Play audible chime alert preview in-app and trigger test notification
+  Future<void> playChimePreview() async {
+    try {
+      await SystemSound.play(SystemSoundType.alert);
+      await HapticFeedback.heavyImpact();
+      await sendImmediateTestNotification();
+    } catch (e) {
+      debugPrint('Chime preview error: $e');
     }
   }
 }
