@@ -19,6 +19,14 @@ class AppConstants {
   static const String appName = 'Dayform';
   static const String appTagline = 'Your day, beautifully organized';
   static const String appVersion = '1.0.0';
+
+  // Developer & Support Details
+  static const String developerName = 'Sangeeth Santhosh S A';
+  static const String developerGithubUrl = 'https://github.com/sangeethsanthosh-git';
+  static const String developerWebsiteUrl = 'https://sangeethsanthosh-git.github.io';
+  static const String developerTwitterUrl = 'https://x.com/sangeeth_saa';
+  static const String buyMeACoffeeUrl = 'https://buymeacoffee.com/sangeethsanthosh';
+
   static const String githubRepoOwner = 'sangeethsanthosh-git';
   static const String githubRepoName = 'dayform';
   static const String githubReleasesUrl =

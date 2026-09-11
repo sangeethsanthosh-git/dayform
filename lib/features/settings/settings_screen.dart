@@ -625,6 +625,205 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // 8. Developer & Connecting Details & Buy Me a Coffee
+          _buildSectionHeader('DEVELOPER & SUPPORT'),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCardSurface : AppColors.lightCardSurface,
+              borderRadius: BorderRadius.circular(AppConstants.cardRadiusMedium),
+              border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Developer Profile Header
+                Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.warmAmber,
+                            AppColors.warmAmber.withOpacity(0.7),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.warmAmber.withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'SS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            AppConstants.developerName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Creator & Lead Developer',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Buy Me a Coffee CTA Banner
+                InkWell(
+                  onTap: () {
+                    UpdateService.instance.launchDownloadUrl(AppConstants.buyMeACoffeeUrl);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFFFDD00),
+                          Color(0xFFFFB300),
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFFB300).withOpacity(0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text('☕', style: TextStyle(fontSize: 20)),
+                        SizedBox(width: 10),
+                        Text(
+                          'Buy Me a Coffee',
+                          style: TextStyle(
+                            color: Color(0xFF1E1E1E),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        SizedBox(width: 6),
+                        Icon(Icons.arrow_forward_rounded, color: Color(0xFF1E1E1E), size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Divider(),
+
+                // Connecting Details: GitHub
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.code_rounded,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                      size: 18,
+                    ),
+                  ),
+                  title: const Text('GitHub Profile', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('github.com/sangeethsanthosh-git', style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.launch_rounded, size: 16),
+                  onTap: () {
+                    UpdateService.instance.launchDownloadUrl(AppConstants.developerGithubUrl);
+                  },
+                ),
+
+                // Connecting Details: Portfolio / Website
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.language_rounded,
+                      color: AppColors.teal,
+                      size: 18,
+                    ),
+                  ),
+                  title: const Text('Portfolio & Projects', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('sangeethsanthosh-git.github.io', style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.launch_rounded, size: 16),
+                  onTap: () {
+                    UpdateService.instance.launchDownloadUrl(AppConstants.developerWebsiteUrl);
+                  },
+                ),
+
+                // Connecting Details: X (Twitter)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1DA1F2).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.alternate_email_rounded,
+                      color: Color(0xFF1DA1F2),
+                      size: 18,
+                    ),
+                  ),
+                  title: const Text('Connect on X (Twitter)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('@sangeeth_saa', style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.launch_rounded, size: 16),
+                  onTap: () {
+                    UpdateService.instance.launchDownloadUrl(AppConstants.developerTwitterUrl);
+                  },
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 40),
         ],
       ),
