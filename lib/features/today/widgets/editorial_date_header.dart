@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 
-class EditorialDateHeader extends StatelessWidget {
+class EditorialDateHeader extends StatefulWidget {
   final DateTime selectedDate;
   final VoidCallback onReturnToToday;
 
@@ -13,18 +15,64 @@ class EditorialDateHeader extends StatelessWidget {
   });
 
   @override
+  State<EditorialDateHeader> createState() => _EditorialDateHeaderState();
+}
+
+class _EditorialDateHeaderState extends State<EditorialDateHeader> {
+  Timer? _ticker;
+  String _locationName = 'Local';
+
+  @override
+  void initState() {
+    super.initState();
+    _detectLocation();
+    _ticker = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _detectLocation() async {
+    try {
+      final info = await FlutterTimezone.getLocalTimezone();
+      final id = info.identifier;
+      if (id.contains('/')) {
+        final city = id.split('/').last.replaceAll('_', ' ');
+        if (mounted) {
+          setState(() {
+            _locationName = city;
+          });
+        }
+      } else if (id.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            _locationName = id;
+          });
+        }
+      }
+    } catch (_) {
+      // Keep 'Local' as fallback
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
-    final isToday = selectedDate.year == now.year &&
-        selectedDate.month == now.month &&
-        selectedDate.day == now.day;
+    final isToday = widget.selectedDate.year == now.year &&
+        widget.selectedDate.month == now.month &&
+        widget.selectedDate.day == now.day;
 
-    final weekdayStr = DateFormat('EEEE').format(selectedDate);
-    final monthDayFullStr = DateFormat('d MMMM').format(selectedDate);
-    final dayNum = selectedDate.day.toString().padLeft(2, '0');
-    final monthNum = selectedDate.month.toString().padLeft(2, '0');
-    final monthAbbr = DateFormat('MMM').format(selectedDate).toUpperCase();
+    final weekdayStr = DateFormat('EEEE').format(widget.selectedDate);
+    final monthDayFullStr = DateFormat('d MMMM').format(widget.selectedDate);
+    final dayNum = widget.selectedDate.day.toString().padLeft(2, '0');
+    final monthNum = widget.selectedDate.month.toString().padLeft(2, '0');
+    final monthAbbr = DateFormat('MMM').format(widget.selectedDate).toUpperCase();
 
     final localTimeStr = DateFormat('h:mm a').format(now);
 
@@ -94,7 +142,7 @@ class EditorialDateHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 _buildClockCard(
-                  title: 'Local Time',
+                  title: _locationName,
                   time: localTimeStr,
                   isDark: isDark,
                   isLocal: true,
@@ -102,7 +150,7 @@ class EditorialDateHeader extends StatelessWidget {
                 if (!isToday) ...[
                   const SizedBox(height: 8),
                   GestureDetector(
-                    onTap: onReturnToToday,
+                    onTap: widget.onReturnToToday,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
