@@ -122,6 +122,8 @@ class AppState extends ChangeNotifier {
 
   Future<void> rescheduleAllUpcomingReminders() async {
     final now = DateTime.now();
+
+    // 1. Events & Reminders
     for (final event in _allEvents) {
       if (event.reminderMinutesBefore != null && event.startDateTime.isAfter(now)) {
         final reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
@@ -133,7 +135,87 @@ class AppState extends ChangeNotifier {
               ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
               : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
           scheduledDate: reminderTime,
+          payload: 'event_${event.id}',
         );
+      }
+    }
+
+    // 2. Tasks with due dates & reminders
+    final allTasks = [..._todayTasks, ..._upcomingTasks, ..._inboxTasks];
+    for (final task in allTasks) {
+      if (!task.isCompleted && task.dueDate != null && task.reminderMinutesBefore != null) {
+        final dueDateTime = DateTime.tryParse("${task.dueDate} ${task.dueTime ?? '09:00'}:00");
+        if (dueDateTime != null && dueDateTime.isAfter(now)) {
+          final reminderTime = dueDateTime.subtract(Duration(minutes: task.reminderMinutesBefore!));
+          if (reminderTime.isAfter(now)) {
+            await NotificationService.instance.scheduleNotification(
+              id: task.id.hashCode,
+              title: 'Task Reminder: ${task.title}',
+              body: task.notes ?? 'Scheduled for ${task.dueTime ?? 'today'}',
+              scheduledDate: reminderTime,
+              payload: 'task_${task.id}',
+            );
+          }
+        }
+      }
+    }
+
+    // 3. Upcoming Bills
+    for (final bill in _bills) {
+      final due = DateTime.tryParse(bill.renewalDate);
+      if (due != null) {
+        final billReminder = DateTime(due.year, due.month, due.day, 9, 0);
+        if (billReminder.isAfter(now)) {
+          await NotificationService.instance.scheduleNotification(
+            id: bill.id.hashCode,
+            title: '💳 Upcoming Payment Due: ${bill.name}',
+            body: 'Payment of ${bill.currency} ${bill.amount.toStringAsFixed(2)} is due today.',
+            scheduledDate: billReminder,
+            payload: 'bill_${bill.id}',
+          );
+        }
+      }
+    }
+
+    // 4. Upcoming Birthdays
+    for (final bday in _birthdays) {
+      final parts = bday.birthDate.split('-');
+      if (parts.length >= 3) {
+        final m = int.tryParse(parts[1]) ?? 1;
+        final d = int.tryParse(parts[2]) ?? 1;
+        var bdayDate = DateTime(now.year, m, d, 9, 0);
+        if (bdayDate.isBefore(now)) {
+          bdayDate = DateTime(now.year + 1, m, d, 9, 0);
+        }
+        await NotificationService.instance.scheduleNotification(
+          id: bday.id.hashCode,
+          title: '🎉 Birthday Today: ${bday.personName}!',
+          body: 'Wish ${bday.personName} a happy birthday! 🎂✨',
+          scheduledDate: bdayDate,
+          payload: 'birthday_${bday.id}',
+        );
+      }
+    }
+
+    // 5. Habits
+    for (final habit in _habits) {
+      if (habit.reminderTime != null) {
+        final timeParts = habit.reminderTime!.split(':');
+        if (timeParts.length == 2) {
+          final hour = int.tryParse(timeParts[0]) ?? 9;
+          final minute = int.tryParse(timeParts[1]) ?? 0;
+          var habitTime = DateTime(now.year, now.month, now.day, hour, minute);
+          if (habitTime.isBefore(now)) {
+            habitTime = habitTime.add(const Duration(days: 1));
+          }
+          await NotificationService.instance.scheduleNotification(
+            id: habit.id.hashCode,
+            title: '✨ Habit Reminder: ${habit.title}',
+            body: 'Time to check in on ${habit.title}!',
+            scheduledDate: habitTime,
+            payload: 'habit_${habit.id}',
+          );
+        }
       }
     }
   }
@@ -307,6 +389,19 @@ class AppState extends ChangeNotifier {
   // --- Bills CRUD ---
   Future<void> addBill(BillItem bill) async {
     await billRepo.insertBill(bill);
+    final due = DateTime.tryParse(bill.renewalDate);
+    if (due != null) {
+      final billReminder = DateTime(due.year, due.month, due.day, 9, 0);
+      if (billReminder.isAfter(DateTime.now())) {
+        await NotificationService.instance.scheduleNotification(
+          id: bill.id.hashCode,
+          title: '💳 Upcoming Payment Due: ${bill.name}',
+          body: 'Payment of ${bill.currency} ${bill.amount.toStringAsFixed(2)} is due today.',
+          scheduledDate: billReminder,
+          payload: 'bill_${bill.id}',
+        );
+      }
+    }
     await refreshAll();
   }
 
@@ -317,6 +412,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> deleteBill(String id) async {
+    await NotificationService.instance.cancelNotification(id.hashCode);
     await billRepo.deleteBill(id);
     await refreshAll();
   }
@@ -324,10 +420,28 @@ class AppState extends ChangeNotifier {
   // --- Birthdays CRUD ---
   Future<void> addBirthday(BirthdayItem bday) async {
     await birthdayRepo.insertBirthday(bday);
+    final parts = bday.birthDate.split('-');
+    if (parts.length >= 3) {
+      final m = int.tryParse(parts[1]) ?? 1;
+      final d = int.tryParse(parts[2]) ?? 1;
+      final now = DateTime.now();
+      var bdayDate = DateTime(now.year, m, d, 9, 0);
+      if (bdayDate.isBefore(now)) {
+        bdayDate = DateTime(now.year + 1, m, d, 9, 0);
+      }
+      await NotificationService.instance.scheduleNotification(
+        id: bday.id.hashCode,
+        title: '🎉 Birthday Today: ${bday.personName}!',
+        body: 'Wish ${bday.personName} a happy birthday! 🎂✨',
+        scheduledDate: bdayDate,
+        payload: 'birthday_${bday.id}',
+      );
+    }
     await refreshAll();
   }
 
   Future<void> deleteBirthday(String id) async {
+    await NotificationService.instance.cancelNotification(id.hashCode);
     await birthdayRepo.deleteBirthday(id);
     await refreshAll();
   }
@@ -335,6 +449,25 @@ class AppState extends ChangeNotifier {
   // --- Habits CRUD ---
   Future<void> addHabit(HabitItem habit) async {
     await habitRepo.insertHabit(habit);
+    if (habit.reminderTime != null) {
+      final timeParts = habit.reminderTime!.split(':');
+      if (timeParts.length == 2) {
+        final hour = int.tryParse(timeParts[0]) ?? 9;
+        final minute = int.tryParse(timeParts[1]) ?? 0;
+        final now = DateTime.now();
+        var habitTime = DateTime(now.year, now.month, now.day, hour, minute);
+        if (habitTime.isBefore(now)) {
+          habitTime = habitTime.add(const Duration(days: 1));
+        }
+        await NotificationService.instance.scheduleNotification(
+          id: habit.id.hashCode,
+          title: '✨ Habit Reminder: ${habit.title}',
+          body: 'Time to check in on ${habit.title}!',
+          scheduledDate: habitTime,
+          payload: 'habit_${habit.id}',
+        );
+      }
+    }
     await refreshAll();
   }
 
@@ -344,6 +477,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> deleteHabit(String id) async {
+    await NotificationService.instance.cancelNotification(id.hashCode);
     await habitRepo.deleteHabit(id);
     await refreshAll();
   }
