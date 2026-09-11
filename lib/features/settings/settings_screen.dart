@@ -690,7 +690,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Creator & Lead Developer',
+                            AppConstants.developerRole,
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
@@ -815,10 +815,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   title: const Text('Connect on X (Twitter)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('@sangeeth_saa', style: TextStyle(fontSize: 12)),
+                  subtitle: const Text(AppConstants.developerTwitterHandle, style: TextStyle(fontSize: 12)),
                   trailing: const Icon(Icons.launch_rounded, size: 16),
                   onTap: () {
                     UpdateService.instance.launchDownloadUrl(AppConstants.developerTwitterUrl);
+                  },
+                ),
+
+                // Connecting Details: LinkedIn
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0A66C2).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.work_rounded,
+                      color: Color(0xFF0A66C2),
+                      size: 18,
+                    ),
+                  ),
+                  title: const Text('LinkedIn Profile', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('linkedin.com/in/sangeethsanthoshsa', style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.launch_rounded, size: 16),
+                  onTap: () {
+                    UpdateService.instance.launchDownloadUrl(AppConstants.developerLinkedinUrl);
+                  },
+                ),
+
+                // Connecting Details: Email Me
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.mail_outline_rounded,
+                      color: Colors.redAccent,
+                      size: 18,
+                    ),
+                  ),
+                  title: const Text('Email Me', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text(AppConstants.developerEmail, style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.launch_rounded, size: 16),
+                  onTap: () {
+                    UpdateService.instance.launchDownloadUrl('mailto:${AppConstants.developerEmail}?subject=Dayform%20Feedback');
                   },
                 ),
               ],

@@ -22,10 +22,14 @@ class AppConstants {
 
   // Developer & Support Details
   static const String developerName = 'Sangeeth Santhosh S A';
+  static const String developerRole = 'Full-Stack Developer & Designer';
+  static const String developerEmail = 'sangeethsanthoshsaa@gmail.com';
   static const String developerGithubUrl = 'https://github.com/sangeethsanthosh-git';
   static const String developerWebsiteUrl = 'https://sangeethsanthosh-git.github.io';
-  static const String developerTwitterUrl = 'https://x.com/sangeeth_saa';
-  static const String buyMeACoffeeUrl = 'https://buymeacoffee.com/sangeethsanthosh';
+  static const String developerTwitterUrl = 'https://x.com/veek10z';
+  static const String developerTwitterHandle = '@veek10z';
+  static const String developerLinkedinUrl = 'https://www.linkedin.com/in/sangeethsanthoshsa';
+  static const String buyMeACoffeeUrl = 'https://www.buymeacoffee.com/sangeethsanthoshsa';
 
   static const String githubRepoOwner = 'sangeethsanthosh-git';
   static const String githubRepoName = 'dayform';
