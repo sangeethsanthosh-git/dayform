@@ -177,10 +177,22 @@ class UserSettings {
       resolvedOnboarding = true;
     }
 
+    final rawBirthDate = map['user_birth_date'] as String?;
+    final resolvedBirthDate =
+        (rawBirthDate != null && rawBirthDate.trim().isNotEmpty)
+            ? rawBirthDate.trim()
+            : null;
+
+    final rawProfileImage = map['profile_image_path'] as String?;
+    final resolvedProfileImage =
+        (rawProfileImage != null && rawProfileImage.trim().isNotEmpty)
+            ? rawProfileImage.trim()
+            : null;
+
     return UserSettings(
       userName: rawName ?? '',
-      profileImagePath: map['profile_image_path'] as String?,
-      userBirthDate: map['user_birth_date'] as String?,
+      profileImagePath: resolvedProfileImage,
+      userBirthDate: resolvedBirthDate,
       hasCompletedOnboarding: resolvedOnboarding,
       themeMode: map['theme_mode'] as String? ?? 'system',
       accentColorIndex: map['accent_color_index'] as int? ?? 0,

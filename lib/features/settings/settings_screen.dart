@@ -20,11 +20,22 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _nameController;
+  bool _controllerInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_controllerInitialized) {
+      final appState = AppStateProvider.of(context);
+      _nameController.text = appState.settings.userName;
+      _controllerInitialized = true;
+    }
   }
 
   @override
@@ -38,9 +49,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // Obtain appState from Inherited or nearest Provider/state
     final appState = AppStateProvider.of(context);
     final settings = appState.settings;
-    if (_nameController.text.isEmpty && settings.userName.isNotEmpty) {
-      _nameController.text = settings.userName;
-    }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -85,49 +93,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 const Divider(height: 24),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.cake_outlined, color: AppColors.warmAmber),
-                  title: const Text('Date of Birth'),
-                  subtitle: Text(
-                    settings.userBirthDate != null
-                        ? DateFormat('d MMMM yyyy').format(DateTime.parse(settings.userBirthDate!))
-                        : 'Not set (Tap to choose)',
-                    style: TextStyle(
-                      color: settings.userBirthDate != null
-                          ? (isDark ? AppColors.primaryLightText : AppColors.primaryDarkText)
-                          : Colors.grey,
-                    ),
-                  ),
-                  trailing: const Icon(Icons.calendar_today_rounded, size: 18),
-                  onTap: () async {
-                    DateTime initial = settings.userBirthDate != null
-                        ? DateTime.parse(settings.userBirthDate!)
-                        : DateTime(2000, 1, 1);
-                    final isDark = Theme.of(context).brightness == Brightness.dark;
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: initial,
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime.now(),
-                      builder: (context, child) {
-                        return Theme(
-                          data: isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
-                          child: child!,
+                Builder(
+                  builder: (context) {
+                    final rawDob = settings.userBirthDate;
+                    final parsedBirthDate = (rawDob != null && rawDob.trim().isNotEmpty)
+                        ? DateTime.tryParse(rawDob.trim())
+                        : null;
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.cake_outlined, color: AppColors.warmAmber),
+                      title: const Text('Date of Birth'),
+                      subtitle: Text(
+                        parsedBirthDate != null
+                            ? DateFormat('d MMMM yyyy').format(parsedBirthDate)
+                            : 'Not set (Tap to choose)',
+                        style: TextStyle(
+                          color: parsedBirthDate != null
+                              ? (isDark ? AppColors.primaryLightText : AppColors.primaryDarkText)
+                              : Colors.grey,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.calendar_today_rounded, size: 18),
+                      onTap: () async {
+                        final now = DateTime.now();
+                        DateTime initial = parsedBirthDate ?? DateTime(2000, 1, 1);
+                        if (initial.isAfter(now)) {
+                          initial = now;
+                        }
+                        final isDark = Theme.of(context).brightness == Brightness.dark;
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: initial,
+                          firstDate: DateTime(1900),
+                          lastDate: now,
+                          builder: (context, child) {
+                            return Theme(
+                              data: isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
+                              child: child!,
+                            );
+                          },
                         );
+                        if (picked != null) {
+                          final str =
+                              "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                          appState.updateSettings(settings.copyWith(userBirthDate: str));
+                          NotificationService.instance.scheduleBirthdayReminder(
+                            id: 999999,
+                            personName: 'You! 🎂 Happy Birthday, ${settings.userName}',
+                            birthDate: picked,
+                            daysBefore: 0,
+                          );
+                        }
                       },
                     );
-                    if (picked != null) {
-                      final str =
-                          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-                      appState.updateSettings(settings.copyWith(userBirthDate: str));
-                      NotificationService.instance.scheduleBirthdayReminder(
-                        id: 999999,
-                        personName: 'You! 🎂 Happy Birthday, ${settings.userName}',
-                        birthDate: picked,
-                        daysBefore: 0,
-                      );
-                    }
                   },
                 ),
               ],
@@ -427,6 +445,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     );
                   },
+                ),
+                const Divider(height: 16),
+
+                // Diagnostic Test Notification
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_active_outlined,
+                      color: AppColors.teal,
+                      size: 20,
+                    ),
+                  ),
+                  title: const Text(
+                    'Test Notification Alert',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Send an instant test alert with current sound & vibration',
+                  ),
+                  trailing: OutlinedButton(
+                    onPressed: () async {
+                      await NotificationService.instance
+                          .sendImmediateTestNotification();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Test notification sent! Check your notification bar 🔔',
+                            ),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text('Test Now'),
+                  ),
+                ),
+                const Divider(height: 16),
+
+                // Test Scheduled 5s Alarm
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.warmAmber.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.alarm_rounded,
+                      color: AppColors.warmAmberForeground,
+                      size: 20,
+                    ),
+                  ),
+                  title: const Text(
+                    'Test Background Alarm (5s)',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Schedules an alarm in 5s to test phone wake-up & lockscreen',
+                  ),
+                  trailing: OutlinedButton(
+                    onPressed: () async {
+                      await NotificationService.instance
+                          .scheduleTestNotification(delaySeconds: 5);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Alarm scheduled! Close or minimize Dayform to test background firing ⏰',
+                            ),
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text('Start 5s'),
+                  ),
                 ),
                 const Divider(height: 16),
 

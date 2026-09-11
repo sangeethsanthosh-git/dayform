@@ -18,7 +18,7 @@ class AppConstants {
   // Centralized branding token - easy to change
   static const String appName = 'Dayform';
   static const String appTagline = 'Your day, beautifully organized';
-  static const String appVersion = '1.0.3';
+  static const String appVersion = '1.0.4';
 
   // Developer & Support Details
   static const String developerName = 'Sangeeth Santhosh S A';

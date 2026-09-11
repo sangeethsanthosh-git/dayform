@@ -36,6 +36,8 @@ class SettingsRepository {
           key == 'default_event_duration_minutes' ||
           key == 'default_reminder_minutes_before') {
         map[key] = int.tryParse(val) ?? 0;
+      } else if (key == 'user_birth_date' || key == 'profile_image_path') {
+        map[key] = val.trim().isEmpty ? null : val.trim();
       } else {
         map[key] = val;
       }
