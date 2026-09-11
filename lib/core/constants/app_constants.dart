@@ -8,7 +8,7 @@ class AppConstants {
   static const int databaseVersion = 1;
 
   // Notification Channels
-  static const String reminderChannelId = 'dayform_reminders_chime_v2';
+  static const String reminderChannelId = 'dayform_alarms_v4';
   static const String reminderChannelName = 'Dayform Reminders & Alarms';
   static const String reminderChannelDesc = 'Loud chime alert for time-sensitive reminders, tasks and calendar events';
 

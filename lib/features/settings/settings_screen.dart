@@ -368,8 +368,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Icon(Icons.music_note_rounded, color: AppColors.warmAmberForeground, size: 20),
                   ),
                   title: const Text('Reminder Alert Tune', style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Classic Harmonic Chime (Melodic bell tone)'),
+                  subtitle: const Text('Classic Harmonic Chime (Tap to preview tone & vibration)'),
                   trailing: Icon(Icons.volume_up_rounded, size: 20, color: AppColors.warmAmberForeground),
+                  onTap: () async {
+                    await NotificationService.instance.playChimePreview();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Playing chime tone & pulse vibration preview...')),
+                      );
+                    }
+                  },
                 ),
                 const Divider(height: 16),
 
@@ -385,19 +393,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Send test notification
+                // Instant test notification
                 ElevatedButton.icon(
                   onPressed: () async {
                     await NotificationService.instance.sendImmediateTestNotification();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Chime notification dispatched! Check your notification bar to hear the sound.')),
+                        const SnackBar(content: Text('Chime notification dispatched! Look at your heads-up alert banner.')),
                       );
                     }
                   },
                   icon: const Icon(Icons.notifications_active_rounded, size: 18),
-                  label: const Text('Play Chime & Test Notification'),
+                  label: const Text('Instant Test (Chime & Heads-Up Alert)'),
                   style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 44),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Scheduled 5-second test alarm (verifies background/lockscreen wake)
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await NotificationService.instance.scheduleTestNotification(delaySeconds: 5);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Alarm scheduled in 5 seconds! You can lock screen or leave app now to test wake.'),
+                          duration: Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.alarm_rounded, size: 18),
+                  label: const Text('Schedule 5s Test Alarm (Lock/Sleep Test)'),
+                  style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 44),
                   ),
                 ),

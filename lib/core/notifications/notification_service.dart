@@ -75,18 +75,22 @@ class NotificationService {
       if (androidImpl != null) {
         // Clear any old or stale channels so fresh channel settings apply
         try {
+          await androidImpl.deleteNotificationChannel(channelId: 'dayform_reminders_chime_v2');
           await androidImpl.deleteNotificationChannel(channelId: 'dayform_reminders_tune');
           await androidImpl.deleteNotificationChannel(channelId: 'dayform_reminders');
         } catch (_) {}
 
-        const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        final AndroidNotificationChannel channel = AndroidNotificationChannel(
           AppConstants.reminderChannelId,
           AppConstants.reminderChannelName,
           description: AppConstants.reminderChannelDesc,
           importance: Importance.max,
           playSound: true,
-          sound: RawResourceAndroidNotificationSound('reminder_chime'),
+          sound: const RawResourceAndroidNotificationSound('reminder_chime'),
           enableVibration: true,
+          vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
+          enableLights: true,
+          showBadge: true,
           audioAttributesUsage: AudioAttributesUsage.alarm,
         );
         await androidImpl.createNotificationChannel(channel);
@@ -125,6 +129,16 @@ class NotificationService {
     return true;
   }
 
+  Future<bool> areNotificationsEnabled() async {
+    if (kIsWeb) return false;
+    if (Platform.isAndroid) {
+      final androidImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      return await androidImpl?.areNotificationsEnabled() ?? false;
+    }
+    return true;
+  }
+
   // Schedule a notification at exact local time
   Future<void> scheduleNotification({
     required int id,
@@ -148,15 +162,7 @@ class NotificationService {
     }
 
     final tzNow = tz.TZDateTime.now(tz.local);
-    final tzScheduledDate = tz.TZDateTime(
-      tz.local,
-      effectiveDate.year,
-      effectiveDate.month,
-      effectiveDate.day,
-      effectiveDate.hour,
-      effectiveDate.minute,
-      effectiveDate.second,
-    );
+    final tzScheduledDate = tz.TZDateTime.from(effectiveDate, tz.local);
 
     // Exact alarms on Android MUST be strictly in the future
     if (tzScheduledDate.isBefore(tzNow) || tzScheduledDate.difference(tzNow).inSeconds < 1) {
@@ -173,7 +179,7 @@ class NotificationService {
       playSound: true,
       sound: const RawResourceAndroidNotificationSound('reminder_chime'),
       enableVibration: true,
-      vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
+      vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
       audioAttributesUsage: AudioAttributesUsage.alarm,
       category: AndroidNotificationCategory.alarm,
       fullScreenIntent: true,
@@ -208,11 +214,11 @@ class NotificationService {
         body: body,
         scheduledDate: tzScheduledDate,
         notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.alarmClock,
         payload: payload,
       );
     } catch (e) {
-      debugPrint('Exact alarm failed ($e), falling back to inexact mode');
+      debugPrint('AlarmClock mode failed ($e), falling back to exactAllowWhileIdle');
       try {
         await _notificationsPlugin.zonedSchedule(
           id: id,
@@ -220,11 +226,24 @@ class NotificationService {
           body: body,
           scheduledDate: tzScheduledDate,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           payload: payload,
         );
-      } catch (err) {
-        debugPrint('Fallback notification schedule also failed: $err');
+      } catch (e2) {
+        debugPrint('Exact mode failed ($e2), falling back to inexact mode');
+        try {
+          await _notificationsPlugin.zonedSchedule(
+            id: id,
+            title: title,
+            body: body,
+            scheduledDate: tzScheduledDate,
+            notificationDetails: notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            payload: payload,
+          );
+        } catch (err) {
+          debugPrint('All notification schedule attempts failed: $err');
+        }
       }
     }
   }
@@ -280,7 +299,7 @@ class NotificationService {
     await _notificationsPlugin.cancelAll();
   }
 
-  // Diagnostic Test Notification with Chime Tune
+  // Diagnostic Test Notification with Chime Tune (Immediate)
   Future<void> sendImmediateTestNotification() async {
     if (kIsWeb) return;
 
@@ -298,7 +317,7 @@ class NotificationService {
       playSound: true,
       sound: const RawResourceAndroidNotificationSound('reminder_chime'),
       enableVibration: true,
-      vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
+      vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
       audioAttributesUsage: AudioAttributesUsage.alarm,
       category: AndroidNotificationCategory.alarm,
       fullScreenIntent: true,
@@ -318,12 +337,31 @@ class NotificationService {
       await _notificationsPlugin.show(
         id: 99999,
         title: 'Dayform Chime Reminder 🔔',
-        body: 'Your reminder chime tune is active and sounding crisp!',
+        body: 'Your reminder chime tune and triple-pulse vibration are active and loud!',
         notificationDetails: details,
       );
     } catch (e) {
       debugPrint('Error showing immediate test notification: $e');
     }
+  }
+
+  // Diagnostic Scheduled Test Notification (e.g. 5 seconds delay)
+  Future<void> scheduleTestNotification({int delaySeconds = 5}) async {
+    if (kIsWeb) return;
+
+    if (!_isInitialized) {
+      await initialize();
+    }
+    await requestPermissions();
+
+    final scheduledDate = DateTime.now().add(Duration(seconds: delaySeconds));
+    await scheduleNotification(
+      id: 88888,
+      title: '⏰ Test Reminder Alarm ($delaySeconds sec)',
+      body: 'Success! Scheduled alarm, vibration and chime triggered right on time!',
+      scheduledDate: scheduledDate,
+      payload: 'test_alarm_payload',
+    );
   }
 
   // Play audible chime alert preview in-app and trigger test notification
