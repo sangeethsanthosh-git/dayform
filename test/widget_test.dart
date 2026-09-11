@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dayform/core/constants/app_constants.dart';
 import 'package:dayform/core/theme/app_colors.dart';
 import 'package:dayform/core/theme/app_theme.dart';
 import 'package:dayform/domain/models/user_settings.dart';
@@ -96,6 +97,23 @@ void main() {
       // 5. Revert back to Gold
       AppColors.applyAccentFromSettings(const UserSettings(accentColorIndex: 0));
       expect(AppColors.warmAmber.value, const Color(0xFFE5BD78).value);
+    });
+
+    test('Notification tones are properly configured and serializable', () {
+      expect(AppConstants.notificationTones.length, 6);
+      expect(AppConstants.getToneOption('chime').title, 'Classic Chime');
+      expect(AppConstants.getToneOption('bell').rawSoundName, 'reminder_bell');
+      expect(AppConstants.getToneOption('marimba').rawSoundName, 'reminder_marimba');
+      expect(AppConstants.getToneOption('electronic').rawSoundName, 'reminder_electronic');
+      expect(AppConstants.getToneOption('zen').rawSoundName, 'reminder_zen');
+      expect(AppConstants.getToneOption('system').rawSoundName, isNull);
+
+      const settings = UserSettings(notificationTone: 'bell');
+      final map = settings.toMap();
+      expect(map['notification_tone'], 'bell');
+
+      final restored = UserSettings.fromMap(map);
+      expect(restored.notificationTone, 'bell');
     });
   });
 }

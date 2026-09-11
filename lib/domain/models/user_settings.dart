@@ -23,6 +23,7 @@ class UserSettings {
   final bool reducedMotion;
   final String defaultCalendarView; // 'month', 'week', 'day', 'agenda'
   final String defaultOpeningScreen; // 'today', 'calendar', 'tasks', 'myspace'
+  final String notificationTone; // 'chime', 'bell', 'marimba', 'electronic', 'zen', 'system'
   final List<String> visibleTodayModules; // ['up_next', 'agenda', 'tasks', 'habits', 'payments', 'birthdays']
   final List<String> todayModuleOrder;
 
@@ -49,6 +50,7 @@ class UserSettings {
     this.reducedMotion = false,
     this.defaultCalendarView = 'month',
     this.defaultOpeningScreen = 'today',
+    this.notificationTone = 'chime',
     this.visibleTodayModules = const [
       'up_next',
       'agenda',
@@ -89,6 +91,7 @@ class UserSettings {
     bool? reducedMotion,
     String? defaultCalendarView,
     String? defaultOpeningScreen,
+    String? notificationTone,
     List<String>? visibleTodayModules,
     List<String>? todayModuleOrder,
   }) {
@@ -117,6 +120,7 @@ class UserSettings {
       reducedMotion: reducedMotion ?? this.reducedMotion,
       defaultCalendarView: defaultCalendarView ?? this.defaultCalendarView,
       defaultOpeningScreen: defaultOpeningScreen ?? this.defaultOpeningScreen,
+      notificationTone: notificationTone ?? this.notificationTone,
       visibleTodayModules: visibleTodayModules ?? this.visibleTodayModules,
       todayModuleOrder: todayModuleOrder ?? this.todayModuleOrder,
     );
@@ -146,6 +150,7 @@ class UserSettings {
       'reduced_motion': reducedMotion ? 1 : 0,
       'default_calendar_view': defaultCalendarView,
       'default_opening_screen': defaultOpeningScreen,
+      'notification_tone': notificationTone,
       'visible_today_modules': jsonEncode(visibleTodayModules),
       'today_module_order': jsonEncode(todayModuleOrder),
     };
@@ -195,6 +200,7 @@ class UserSettings {
       reducedMotion: (map['reduced_motion'] as int? ?? 0) == 1,
       defaultCalendarView: map['default_calendar_view'] as String? ?? 'month',
       defaultOpeningScreen: map['default_opening_screen'] as String? ?? 'today',
+      notificationTone: map['notification_tone'] as String? ?? 'chime',
       visibleTodayModules: parseJsonList(map['visible_today_modules'], [
         'up_next',
         'agenda',

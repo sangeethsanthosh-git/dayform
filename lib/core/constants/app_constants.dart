@@ -1,3 +1,19 @@
+class NotificationToneOption {
+  final String id;
+  final String title;
+  final String description;
+  final String channelId;
+  final String? rawSoundName;
+
+  const NotificationToneOption({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.channelId,
+    this.rawSoundName,
+  });
+}
+
 class AppConstants {
   // Centralized branding token - easy to change
   static const String appName = 'Dayform';
@@ -16,6 +32,59 @@ class AppConstants {
   static const String reminderChannelDesc =
       'Loud chime alert for time-sensitive reminders, tasks and calendar events';
 
+  // Available Notification Tones
+  static const List<NotificationToneOption> notificationTones = [
+    NotificationToneOption(
+      id: 'chime',
+      title: 'Classic Chime',
+      description: 'Warm 3-tone harmonic chime (Default)',
+      channelId: 'dayform_tone_chime_v1',
+      rawSoundName: 'reminder_chime',
+    ),
+    NotificationToneOption(
+      id: 'bell',
+      title: 'Crystal Bell',
+      description: 'Crisp, high-clarity ringing bell',
+      channelId: 'dayform_tone_bell_v1',
+      rawSoundName: 'reminder_bell',
+    ),
+    NotificationToneOption(
+      id: 'marimba',
+      title: 'Gentle Marimba',
+      description: 'Soft wooden acoustic triad arpeggio',
+      channelId: 'dayform_tone_marimba_v1',
+      rawSoundName: 'reminder_marimba',
+    ),
+    NotificationToneOption(
+      id: 'electronic',
+      title: 'Digital Pulse',
+      description: 'Modern energetic dual-pulse synth',
+      channelId: 'dayform_tone_electronic_v1',
+      rawSoundName: 'reminder_electronic',
+    ),
+    NotificationToneOption(
+      id: 'zen',
+      title: 'Zen Singing Bowl',
+      description: 'Tranquil ambient gong & meditative resonance',
+      channelId: 'dayform_tone_zen_v1',
+      rawSoundName: 'reminder_zen',
+    ),
+    NotificationToneOption(
+      id: 'system',
+      title: 'Device Default',
+      description: 'Standard Android notification sound',
+      channelId: 'dayform_tone_system_v1',
+      rawSoundName: null,
+    ),
+  ];
+
+  static NotificationToneOption getToneOption(String? id) {
+    return notificationTones.firstWhere(
+      (t) => t.id == id,
+      orElse: () => notificationTones.first,
+    );
+  }
+
   // Layout & Styling constants
   static const double cardRadiusLarge = 28.0;
   static const double cardRadiusMedium = 20.0;
@@ -28,3 +97,4 @@ class AppConstants {
   static const String defaultCurrency = 'INR';
   static const String defaultCurrencySymbol = '₹';
 }
+

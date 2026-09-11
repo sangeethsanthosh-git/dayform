@@ -19,6 +19,13 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
   NotificationInteractionCallback? _onNotificationInteraction;
+  String _activeToneKey = 'chime';
+
+  String get activeToneKey => _activeToneKey;
+
+  void setActiveTone(String toneKey) {
+    _activeToneKey = toneKey;
+  }
 
   static const String _snoozeActionId = 'action_snooze';
   static const String _completeActionId = 'action_complete';
@@ -115,7 +122,8 @@ class NotificationService {
           } catch (_) {}
         }
 
-        final AndroidNotificationChannel channel = AndroidNotificationChannel(
+        // Register default reminder channel
+        final AndroidNotificationChannel defaultChannel = AndroidNotificationChannel(
           AppConstants.reminderChannelId,
           AppConstants.reminderChannelName,
           description: AppConstants.reminderChannelDesc,
@@ -128,7 +136,27 @@ class NotificationService {
           showBadge: true,
           audioAttributesUsage: AudioAttributesUsage.alarm,
         );
-        await androidImpl.createNotificationChannel(channel);
+        await androidImpl.createNotificationChannel(defaultChannel);
+
+        // Register all selectable sound channels
+        for (final tone in AppConstants.notificationTones) {
+          final AndroidNotificationChannel toneChannel = AndroidNotificationChannel(
+            tone.channelId,
+            'Dayform: ${tone.title}',
+            description: tone.description,
+            importance: Importance.max,
+            playSound: true,
+            sound: tone.rawSoundName != null
+                ? RawResourceAndroidNotificationSound(tone.rawSoundName!)
+                : null,
+            enableVibration: true,
+            vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
+            enableLights: true,
+            showBadge: true,
+            audioAttributesUsage: AudioAttributesUsage.alarm,
+          );
+          await androidImpl.createNotificationChannel(toneChannel);
+        }
       }
     }
 
@@ -270,6 +298,7 @@ class NotificationService {
     required String body,
     required DateTime scheduledDate,
     String? payload,
+    String? toneKey,
   }) async {
     if (kIsWeb) return false;
 
@@ -314,16 +343,20 @@ class NotificationService {
         ),
     ];
 
+    final selectedTone = AppConstants.getToneOption(toneKey ?? _activeToneKey);
+
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-          AppConstants.reminderChannelId,
-          AppConstants.reminderChannelName,
-          channelDescription: AppConstants.reminderChannelDesc,
+          selectedTone.channelId,
+          'Dayform: ${selectedTone.title}',
+          channelDescription: selectedTone.description,
           importance: Importance.max,
           priority: Priority.max,
           showWhen: true,
           playSound: true,
-          sound: const RawResourceAndroidNotificationSound('reminder_chime'),
+          sound: selectedTone.rawSoundName != null
+              ? RawResourceAndroidNotificationSound(selectedTone.rawSoundName!)
+              : null,
           enableVibration: true,
           vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
           audioAttributesUsage: AudioAttributesUsage.alarm,
@@ -453,8 +486,8 @@ class NotificationService {
     await _notificationsPlugin.cancelAll();
   }
 
-  // Diagnostic Test Notification with Chime Tune (Immediate)
-  Future<void> sendImmediateTestNotification() async {
+  // Diagnostic Test Notification with Selected Tone (Immediate)
+  Future<void> sendImmediateTestNotification({String? toneKey}) async {
     if (kIsWeb) return;
 
     if (!_isInitialized) {
@@ -462,15 +495,19 @@ class NotificationService {
     }
     await requestPermissions();
 
+    final selectedTone = AppConstants.getToneOption(toneKey ?? _activeToneKey);
+
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-          AppConstants.reminderChannelId,
-          AppConstants.reminderChannelName,
-          channelDescription: AppConstants.reminderChannelDesc,
+          selectedTone.channelId,
+          'Dayform: ${selectedTone.title}',
+          channelDescription: selectedTone.description,
           importance: Importance.max,
           priority: Priority.max,
           playSound: true,
-          sound: const RawResourceAndroidNotificationSound('reminder_chime'),
+          sound: selectedTone.rawSoundName != null
+              ? RawResourceAndroidNotificationSound(selectedTone.rawSoundName!)
+              : null,
           enableVibration: true,
           vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
           audioAttributesUsage: AudioAttributesUsage.alarm,
@@ -500,9 +537,9 @@ class NotificationService {
     try {
       await _notificationsPlugin.show(
         id: 99999,
-        title: 'Dayform Chime Reminder 🔔',
+        title: 'Dayform: ${selectedTone.title} 🔔',
         body:
-            'Your reminder chime tune and triple-pulse vibration are active and loud!',
+            'Testing "${selectedTone.title}" tone with custom vibration alert!',
         notificationDetails: details,
       );
     } catch (e) {
@@ -511,7 +548,10 @@ class NotificationService {
   }
 
   // Diagnostic Scheduled Test Notification (e.g. 5 seconds delay)
-  Future<void> scheduleTestNotification({int delaySeconds = 5}) async {
+  Future<void> scheduleTestNotification({
+    int delaySeconds = 5,
+    String? toneKey,
+  }) async {
     if (kIsWeb) return;
 
     if (!_isInitialized) {
@@ -520,24 +560,31 @@ class NotificationService {
     await requestPermissions();
 
     final scheduledDate = DateTime.now().add(Duration(seconds: delaySeconds));
+    final selectedTone = AppConstants.getToneOption(toneKey ?? _activeToneKey);
     await scheduleNotification(
       id: 88888,
-      title: '⏰ Test Reminder Alarm ($delaySeconds sec)',
+      title: '⏰ Test Alert: ${selectedTone.title} ($delaySeconds sec)',
       body:
-          'Success! Scheduled alarm, vibration and chime triggered right on time!',
+          'Success! Scheduled alarm, vibration and ${selectedTone.title} triggered right on time!',
       scheduledDate: scheduledDate,
       payload: 'test_alarm_payload',
+      toneKey: selectedTone.id,
     );
   }
 
-  // Play audible chime alert preview in-app and trigger test notification
-  Future<void> playChimePreview() async {
+  // Play audible tone preview in-app and trigger test notification
+  Future<void> playTonePreview(String toneKey) async {
     try {
       await SystemSound.play(SystemSoundType.alert);
       await HapticFeedback.heavyImpact();
-      await sendImmediateTestNotification();
+      await sendImmediateTestNotification(toneKey: toneKey);
     } catch (e) {
-      debugPrint('Chime preview error: $e');
+      debugPrint('Tone preview error: $e');
     }
+  }
+
+  // Backwards-compatible chime preview
+  Future<void> playChimePreview() async {
+    await playTonePreview(_activeToneKey);
   }
 }

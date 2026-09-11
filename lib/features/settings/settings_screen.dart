@@ -357,26 +357,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               children: [
                 // Notification Sound / Tune Setting
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.warmAmber.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.music_note_rounded, color: AppColors.warmAmberForeground, size: 20),
-                  ),
-                  title: const Text('Reminder Alert Tune', style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Classic Harmonic Chime (Tap to preview tone & vibration)'),
-                  trailing: Icon(Icons.volume_up_rounded, size: 20, color: AppColors.warmAmberForeground),
-                  onTap: () async {
-                    await NotificationService.instance.playChimePreview();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Playing chime tone & pulse vibration preview...')),
-                      );
-                    }
+                Builder(
+                  builder: (context) {
+                    final currentTone =
+                        AppConstants.getToneOption(settings.notificationTone);
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.warmAmber.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          _getToneIcon(currentTone.id),
+                          color: AppColors.warmAmberForeground,
+                          size: 20,
+                        ),
+                      ),
+                      title: const Text(
+                        'Notification Alert Tone',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        '${currentTone.title} • ${currentTone.description}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: 'Preview sound',
+                            icon: Icon(
+                              Icons.volume_up_rounded,
+                              size: 20,
+                              color: AppColors.warmAmberForeground,
+                            ),
+                            onPressed: () async {
+                              await NotificationService.instance.playTonePreview(
+                                currentTone.id,
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Playing preview: ${currentTone.title} 🔔',
+                                    ),
+                                    duration: const Duration(milliseconds: 1500),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
+                        ],
+                      ),
+                      onTap: () => _showTonePickerSheet(
+                        context,
+                        settings,
+                        appState,
+                        isDark,
+                      ),
+                    );
                   },
                 ),
                 const Divider(height: 16),
@@ -398,13 +445,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onPressed: () async {
                     await NotificationService.instance.sendImmediateTestNotification();
                     if (context.mounted) {
+                      final activeTone =
+                          AppConstants.getToneOption(settings.notificationTone);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Chime notification dispatched! Look at your heads-up alert banner.')),
+                        SnackBar(
+                          content: Text(
+                            '${activeTone.title} notification dispatched! Look at your heads-up alert banner.',
+                          ),
+                        ),
                       );
                     }
                   },
                   icon: const Icon(Icons.notifications_active_rounded, size: 18),
-                  label: const Text('Instant Test (Chime & Heads-Up Alert)'),
+                  label: Text(
+                    'Instant Test (${AppConstants.getToneOption(settings.notificationTone).title})',
+                  ),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 44),
                   ),
@@ -416,10 +471,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onPressed: () async {
                     await NotificationService.instance.scheduleTestNotification(delaySeconds: 5);
                     if (context.mounted) {
+                      final activeTone =
+                          AppConstants.getToneOption(settings.notificationTone);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Alarm scheduled in 5 seconds! You can lock screen or leave app now to test wake.'),
-                          duration: Duration(seconds: 4),
+                        SnackBar(
+                          content: Text(
+                            '${activeTone.title} scheduled in 5 seconds! You can lock screen or leave app now to test wake.',
+                          ),
+                          duration: const Duration(seconds: 4),
                         ),
                       );
                     }
@@ -546,6 +605,261 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  IconData _getToneIcon(String id) {
+    switch (id) {
+      case 'bell':
+        return Icons.notifications_rounded;
+      case 'marimba':
+        return Icons.music_note_rounded;
+      case 'electronic':
+        return Icons.bolt_rounded;
+      case 'zen':
+        return Icons.spa_rounded;
+      case 'system':
+        return Icons.phone_android_rounded;
+      case 'chime':
+      default:
+        return Icons.notifications_active_rounded;
+    }
+  }
+
+  void _showTonePickerSheet(
+    BuildContext context,
+    UserSettings settings,
+    AppState appState,
+    bool isDark,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final currentToneId = appState.settings.notificationTone;
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkCardSurface
+                    : AppColors.lightCardSurface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppConstants.cardRadiusLarge),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  ),
+                ),
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withOpacity(0.35),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.warmAmber.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.music_note_rounded,
+                            color: AppColors.warmAmberForeground,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Notification Alert Tone',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Choose a sound for reminders, alarms and alerts',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? AppColors.secondaryLightText
+                                      : AppColors.secondaryDarkText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                    ...AppConstants.notificationTones.map((tone) {
+                      final isSelected = currentToneId == tone.id;
+                      return Container(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.warmAmber.withOpacity(
+                                  isDark ? 0.18 : 0.12,
+                                )
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.cardRadiusMedium,
+                          ),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.warmAmber.withOpacity(0.5)
+                                : Colors.transparent,
+                          ),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          leading: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.warmAmber
+                                  : (isDark ? Colors.white10 : Colors.black12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _getToneIcon(tone.id),
+                              color: isSelected
+                                  ? Colors.white
+                                  : (isDark ? Colors.white70 : Colors.black87),
+                              size: 18,
+                            ),
+                          ),
+                          title: Row(
+                            children: [
+                              Text(
+                                tone.title,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w600,
+                                ),
+                              ),
+                              if (isSelected) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.warmAmber,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'ACTIVE',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          subtitle: Text(
+                            tone.description,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.secondaryLightText
+                                  : AppColors.secondaryDarkText,
+                            ),
+                          ),
+                          trailing: IconButton(
+                            tooltip: 'Preview sound',
+                            icon: Icon(
+                              Icons.volume_up_rounded,
+                              color: isSelected
+                                  ? AppColors.warmAmberForeground
+                                  : (isDark ? Colors.white60 : Colors.black54),
+                            ),
+                            onPressed: () async {
+                              await NotificationService.instance.playTonePreview(
+                                tone.id,
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Playing preview: ${tone.title} 🔔',
+                                    ),
+                                    duration: const Duration(milliseconds: 1500),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          onTap: () async {
+                            setSheetState(() {});
+                            await appState.updateSettings(
+                              appState.settings.copyWith(
+                                notificationTone: tone.id,
+                              ),
+                            );
+                            await NotificationService.instance.playTonePreview(
+                              tone.id,
+                            );
+                            if (context.mounted) {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Notification tone set to ${tone.title}! 🔔',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Close'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

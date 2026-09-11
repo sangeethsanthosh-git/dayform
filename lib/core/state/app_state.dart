@@ -103,6 +103,7 @@ class AppState extends ChangeNotifier {
     // 1. Load user settings
     _settings = await settingsRepo.getSettings();
     AppColors.applyAccentFromSettings(_settings);
+    NotificationService.instance.setActiveTone(_settings.notificationTone);
 
     // 2. Refresh all domain data (starts clean for fresh install)
     await refreshAll();
@@ -564,9 +565,14 @@ class AppState extends ChangeNotifier {
 
   // --- Settings ---
   Future<void> updateSettings(UserSettings newSettings) async {
+    final toneChanged = _settings.notificationTone != newSettings.notificationTone;
     _settings = newSettings;
     AppColors.applyAccentFromSettings(newSettings);
+    NotificationService.instance.setActiveTone(newSettings.notificationTone);
     await settingsRepo.saveSettings(newSettings);
+    if (toneChanged) {
+      await rescheduleAllUpcomingReminders();
+    }
     notifyListeners();
   }
 
