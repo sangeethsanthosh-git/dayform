@@ -107,6 +107,9 @@ class AppState extends ChangeNotifier {
     // 2. Refresh all domain data (starts clean for fresh install)
     await refreshAll();
 
+    // 3. Ensure all upcoming reminders are synced with NotificationService
+    await rescheduleAllUpcomingReminders();
+
     _isLoading = false;
     notifyListeners();
   }
@@ -115,6 +118,24 @@ class AppState extends ChangeNotifier {
     _selectedDate = date;
     _loadEventsForSelectedDate();
     notifyListeners();
+  }
+
+  Future<void> rescheduleAllUpcomingReminders() async {
+    final now = DateTime.now();
+    for (final event in _allEvents) {
+      if (event.reminderMinutesBefore != null && event.startDateTime.isAfter(now)) {
+        final reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
+        final isReminder = event.title.toLowerCase().startsWith('reminder');
+        await NotificationService.instance.scheduleNotification(
+          id: event.id.hashCode,
+          title: isReminder ? event.title : 'Upcoming: ${event.title}',
+          body: isReminder
+              ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
+              : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
+          scheduledDate: reminderTime,
+        );
+      }
+    }
   }
 
   Future<void> refreshAll() async {
@@ -184,10 +205,13 @@ class AppState extends ChangeNotifier {
     await scheduleRepo.insertEvent(event);
     if (event.reminderMinutesBefore != null) {
       final reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
+      final isReminder = event.title.toLowerCase().startsWith('reminder');
       await NotificationService.instance.scheduleNotification(
         id: event.id.hashCode,
-        title: 'Upcoming Event: ${event.title}',
-        body: 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}',
+        title: isReminder ? event.title : 'Upcoming: ${event.title}',
+        body: isReminder
+            ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
+            : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
         scheduledDate: reminderTime,
       );
     }
@@ -196,13 +220,16 @@ class AppState extends ChangeNotifier {
 
   Future<void> updateEvent(EventItem event) async {
     await scheduleRepo.updateEvent(event);
+    await NotificationService.instance.cancelNotification(event.id.hashCode);
     if (event.reminderMinutesBefore != null) {
       final reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
-      await NotificationService.instance.cancelNotification(event.id.hashCode);
+      final isReminder = event.title.toLowerCase().startsWith('reminder');
       await NotificationService.instance.scheduleNotification(
         id: event.id.hashCode,
-        title: 'Upcoming Event: ${event.title}',
-        body: 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}',
+        title: isReminder ? event.title : 'Upcoming: ${event.title}',
+        body: isReminder
+            ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
+            : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
         scheduledDate: reminderTime,
       );
     }

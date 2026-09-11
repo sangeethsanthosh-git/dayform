@@ -9,14 +9,12 @@ class EditorialMeetingCard extends StatelessWidget {
   final EventItem event;
   final VoidCallback onTap;
   final Color? backgroundColor;
-  final bool showAvatars;
 
   const EditorialMeetingCard({
     super.key,
     required this.event,
     required this.onTap,
     this.backgroundColor,
-    this.showAvatars = true,
   });
 
   @override
@@ -54,7 +52,7 @@ class EditorialMeetingCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Row: Category pill & Overlapping Avatars (Image 1 Left)
+            // Top Row: Category pill & Subtle Chevron Indicator
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -81,13 +79,16 @@ class EditorialMeetingCard extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                if (showAvatars) _buildOverlappingAvatars(isDark),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 13,
+                  color: isDark ? AppColors.secondaryLightText.withOpacity(0.6) : AppColors.secondaryDarkText.withOpacity(0.6),
+                ),
               ],
             ),
             const SizedBox(height: 14),
 
-            // Meeting Title (Image 1 Left)
+            // Meeting Title
             Text(
               event.title,
               style: TextStyle(
@@ -124,129 +125,54 @@ class EditorialMeetingCard extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
 
-            // Bottom Timeline Row: [Start Time] --- [Duration Pill] --- [End Time] (Image 1 Left)
+            // Clean Timeline Row: Time Range & Duration
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: isDark ? Colors.black.withOpacity(0.3) : Colors.white.withOpacity(0.65),
-                borderRadius: BorderRadius.circular(16),
+                color: isDark ? Colors.black.withOpacity(0.25) : Colors.white.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Start Time
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Start',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
-                        ),
-                      ),
-                      Text(
-                        startTimeStr,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
-                        ),
-                      ),
-                    ],
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 15,
+                    color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
                   ),
-
-                  // Duration Pill (Dark pill in Image 1 Left)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white : AppColors.pillBlack,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      event.isAllDay ? 'All Day' : '$durationMinutes Min',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? AppColors.pillBlack : Colors.white,
-                        letterSpacing: 0.2,
-                      ),
+                  const SizedBox(width: 8),
+                  Text(
+                    event.isAllDay ? 'All Day' : '$startTimeStr – $endTimeStr',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+                      letterSpacing: -0.2,
                     ),
                   ),
-
-                  // End Time
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'End',
+                  const Spacer(),
+                  if (!event.isAllDay && durationMinutes > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white : AppColors.pillBlack,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$durationMinutes min',
                         style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? AppColors.pillBlack : Colors.white,
                         ),
                       ),
-                      Text(
-                        endTimeStr,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildOverlappingAvatars(bool isDark) {
-    final avatarColors = [
-      const Color(0xFFD6A6AF), // Rose
-      const Color(0xFFA7CFCA), // Teal
-      const Color(0xFFE5BD78), // Amber
-    ];
-    final avatarInitials = ['JD', 'AK', 'WZ'];
-
-    return SizedBox(
-      width: 68,
-      height: 28,
-      child: Stack(
-        children: [
-          for (int i = 0; i < 3; i++)
-            Positioned(
-              left: i * 18.0,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: avatarColors[i],
-                  border: Border.all(
-                    color: isDark ? AppColors.darkCardSurface : Colors.white,
-                    width: 2,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  avatarInitials[i],
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primaryDarkText,
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }

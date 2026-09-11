@@ -31,7 +31,7 @@ class SampleDataSeeder {
     await scheduleRepo.insertEvent(EventItem(
       id: uuid.v4(),
       title: 'Developer handoff',
-      notes: 'Handoff design specs with Tommy Carter',
+      notes: 'Handoff design specifications and export',
       startDateTime: handoffStart,
       endDateTime: handoffEnd,
       dateOnly: todayStr,
@@ -46,7 +46,7 @@ class SampleDataSeeder {
     await scheduleRepo.insertEvent(EventItem(
       id: uuid.v4(),
       title: 'Weekly design sync',
-      notes: 'Sync with Marissa Sanchez on Dayform design',
+      notes: 'Project roadmap sync and milestone review',
       startDateTime: syncStart,
       endDateTime: syncEnd,
       dateOnly: todayStr,

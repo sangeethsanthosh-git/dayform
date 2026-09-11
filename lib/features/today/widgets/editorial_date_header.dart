@@ -26,10 +26,6 @@ class EditorialDateHeader extends StatelessWidget {
     final monthNum = selectedDate.month.toString().padLeft(2, '0');
     final monthAbbr = DateFormat('MMM').format(selectedDate).toUpperCase();
 
-    // Secondary city time (New York = UTC-4 / UTC-5)
-    final utcNow = now.toUtc();
-    final nyTime = utcNow.subtract(const Duration(hours: 4)); // EDT
-    final nyTimeStr = DateFormat('h:mm a').format(nyTime);
     final localTimeStr = DateFormat('h:mm a').format(now);
 
     return Column(
@@ -93,18 +89,12 @@ class EditorialDateHeader extends StatelessWidget {
               ),
             ),
 
-            // Right: Dual World Clock Cards (matching Image 1 Left)
+            // Right: Local System Clock Card
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 _buildClockCard(
-                  title: 'New York',
-                  time: nyTimeStr,
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 6),
-                _buildClockCard(
-                  title: 'Local',
+                  title: 'Local Time',
                   time: localTimeStr,
                   isDark: isDark,
                   isLocal: true,
@@ -153,19 +143,17 @@ class EditorialDateHeader extends StatelessWidget {
     required String title,
     required String time,
     required bool isDark,
-    bool isLocal = false,
+    bool isLocal = true,
   }) {
     return Container(
-      width: 105,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      width: 108,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCardSurface : AppColors.lightCardSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isLocal
-              ? (isDark ? AppColors.warmAmber.withOpacity(0.4) : AppColors.warmAmber)
-              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-          width: isLocal ? 1.2 : 1,
+          color: isDark ? AppColors.warmAmber.withOpacity(0.4) : AppColors.warmAmber,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
@@ -185,7 +173,7 @@ class EditorialDateHeader extends StatelessWidget {
                 height: 6,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isLocal ? AppColors.warmAmber : Colors.grey,
+                  color: AppColors.warmAmber,
                 ),
               ),
               const SizedBox(width: 4),

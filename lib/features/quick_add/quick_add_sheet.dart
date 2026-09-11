@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/category_definitions.dart';
+import '../../core/notifications/notification_service.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/app_colors.dart';
 import '../../domain/models/bill_item.dart';
@@ -153,6 +154,10 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
     );
     final endDt = startDt.add(Duration(minutes: _durationMinutes));
 
+    if (_reminderOffset >= 0) {
+      NotificationService.instance.requestPermissions();
+    }
+
     switch (_tabController.index) {
       case 0: // Event
         final event = EventItem(
@@ -165,7 +170,7 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
           dateOnly: dateStr,
           category: _selectedCategory,
           location: _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
-          reminderMinutesBefore: _reminderOffset > 0 ? _reminderOffset : null,
+          reminderMinutesBefore: _reminderOffset >= 0 ? _reminderOffset : null,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -182,7 +187,7 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
           priority: 2, // Medium default
           category: _selectedCategory,
           estimatedDurationMinutes: _durationMinutes,
-          reminderMinutesBefore: _reminderOffset,
+          reminderMinutesBefore: _reminderOffset >= 0 ? _reminderOffset : null,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -199,7 +204,7 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
           isAllDay: false,
           dateOnly: dateStr,
           category: 'personal',
-          reminderMinutesBefore: 0, // at time
+          reminderMinutesBefore: _reminderOffset >= 0 ? _reminderOffset : 0,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -459,6 +464,69 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
                     ],
                   ),
                   const SizedBox(height: 12),
+
+                  // Reminder Selector for Event (0), Task (1), and Reminder (2)
+                  AnimatedBuilder(
+                    animation: _tabController,
+                    builder: (context, _) {
+                      if (_tabController.index > 2) return const SizedBox.shrink();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.notifications_active_outlined,
+                                size: 16,
+                                color: AppColors.warmAmber,
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Reminder Alert',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                {'label': 'At time', 'val': 0},
+                                {'label': '5m before', 'val': 5},
+                                {'label': '15m before', 'val': 15},
+                                {'label': '30m before', 'val': 30},
+                                {'label': '1h before', 'val': 60},
+                                {'label': 'None', 'val': -1},
+                              ].map((opt) {
+                                final val = opt['val'] as int;
+                                final isSel = _reminderOffset == val;
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: ChoiceChip(
+                                    label: Text(opt['label'] as String),
+                                    selected: isSel,
+                                    selectedColor: AppColors.warmAmber,
+                                    labelStyle: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                                      color: isSel ? Colors.white : null,
+                                    ),
+                                    onSelected: (selected) {
+                                      if (selected) {
+                                        setState(() => _reminderOffset = val);
+                                      }
+                                    },
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      );
+                    },
+                  ),
 
                   // Specific fields for Bill (tab 3) and Birthday (tab 4)
                   AnimatedBuilder(

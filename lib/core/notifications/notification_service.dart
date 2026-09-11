@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../constants/app_constants.dart';
@@ -15,8 +16,14 @@ class NotificationService {
   Future<void> initialize({Function(String? payload)? onNotificationTapped}) async {
     if (_isInitialized) return;
 
-    // Initialize TimeZone database
+    // Initialize TimeZone database and detect device's local location
     tz.initializeTimeZones();
+    try {
+      final info = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(info.identifier));
+    } catch (e) {
+      debugPrint('Could not set system timezone ($e), falling back to default.');
+    }
 
     // Android Setup
     const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -59,6 +66,9 @@ class NotificationService {
       }
     }
 
+    // Prompt for notification & exact alarm permissions
+    await requestPermissions();
+
     _isInitialized = true;
   }
 
@@ -98,10 +108,29 @@ class NotificationService {
   }) async {
     if (kIsWeb) return;
 
-    // If scheduled time is in the past, do not schedule
-    if (scheduledDate.isBefore(DateTime.now())) return;
+    if (!_isInitialized) {
+      await initialize();
+    }
 
-    final tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
+    final now = DateTime.now();
+    DateTime effectiveDate = scheduledDate;
+
+    // If the scheduled date is slightly in the past (within 10 mins),
+    // schedule it 3 seconds from now so the user receives the alert.
+    if (effectiveDate.isBefore(now)) {
+      if (effectiveDate.isAfter(now.subtract(const Duration(minutes: 10)))) {
+        effectiveDate = now.add(const Duration(seconds: 3));
+      } else {
+        return; // Truly in the past, do not schedule
+      }
+    }
+
+    final tzNow = tz.TZDateTime.now(tz.local);
+    var tzScheduledDate = tz.TZDateTime.from(effectiveDate, tz.local);
+    // Exact alarms on Android MUST be strictly in the future
+    if (tzScheduledDate.isBefore(tzNow) || tzScheduledDate.difference(tzNow).inSeconds < 2) {
+      tzScheduledDate = tzNow.add(const Duration(seconds: 3));
+    }
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       AppConstants.reminderChannelId,
@@ -148,7 +177,7 @@ class NotificationService {
         payload: payload,
       );
     } catch (e) {
-      // Fallback to inexact if exact alarm permission was declined by user
+      debugPrint('Exact alarm failed ($e), falling back to inexact mode');
       try {
         await _notificationsPlugin.zonedSchedule(
           id: id,
@@ -159,7 +188,9 @@ class NotificationService {
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           payload: payload,
         );
-      } catch (_) {}
+      } catch (err) {
+        debugPrint('Fallback notification schedule also failed: $err');
+      }
     }
   }
 
@@ -216,6 +247,13 @@ class NotificationService {
 
   // Diagnostic Test Notification with Chime Tune
   Future<void> sendImmediateTestNotification() async {
+    if (kIsWeb) return;
+
+    if (!_isInitialized) {
+      await initialize();
+    }
+    await requestPermissions();
+
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       AppConstants.reminderChannelId,
       AppConstants.reminderChannelName,
@@ -237,11 +275,15 @@ class NotificationService {
       ),
     );
 
-    await _notificationsPlugin.show(
-      id: 99999,
-      title: 'Dayform Chime Reminder 🔔',
-      body: 'Your reminder chime tune is active and sounding crisp!',
-      notificationDetails: details,
-    );
+    try {
+      await _notificationsPlugin.show(
+        id: 99999,
+        title: 'Dayform Chime Reminder 🔔',
+        body: 'Your reminder chime tune is active and sounding crisp!',
+        notificationDetails: details,
+      );
+    } catch (e) {
+      debugPrint('Error showing immediate test notification: $e');
+    }
   }
 }
