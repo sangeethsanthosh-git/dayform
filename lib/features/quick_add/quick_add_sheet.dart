@@ -317,6 +317,7 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
       padding: EdgeInsets.only(
@@ -410,8 +411,10 @@ class _QuickAddSheetState extends State<QuickAddSheet> with SingleTickerProvider
             controller: _tabController,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            labelColor: AppColors.warmAmberForeground,
+            labelColor: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+            unselectedLabelColor: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
             indicatorColor: AppColors.warmAmber,
+            indicatorWeight: 3,
             labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
             tabs: const [
