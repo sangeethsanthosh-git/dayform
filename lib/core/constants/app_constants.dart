@@ -18,6 +18,13 @@ class AppConstants {
   // Centralized branding token - easy to change
   static const String appName = 'Dayform';
   static const String appTagline = 'Your day, beautifully organized';
+  static const String appVersion = '1.0.0';
+  static const String githubRepoOwner = 'sangeethsanthosh-git';
+  static const String githubRepoName = 'dayform';
+  static const String githubReleasesUrl =
+      'https://github.com/sangeethsanthosh-git/dayform/releases';
+  static const String githubReleasesApiUrl =
+      'https://api.github.com/repos/sangeethsanthosh-git/dayform/releases/latest';
 
   // Storage & database
   static const String databaseName = 'dayform.db';

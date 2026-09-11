@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dayform/core/constants/app_constants.dart';
+import 'package:dayform/core/services/update_service.dart';
 import 'package:dayform/core/theme/app_colors.dart';
 import 'package:dayform/core/theme/app_theme.dart';
 import 'package:dayform/domain/models/user_settings.dart';
@@ -114,6 +115,62 @@ void main() {
 
       final restored = UserSettings.fromMap(map);
       expect(restored.notificationTone, 'bell');
+    });
+
+    test('UpdateService accurately parses and compares semantic versions', () {
+      // Newer versions
+      expect(UpdateService.compareVersions('1.0.0', '1.0.1'), 1);
+      expect(UpdateService.compareVersions('1.0.0', 'v1.0.1'), 1);
+      expect(UpdateService.compareVersions('1.0.0', 'v1.1.0'), 1);
+      expect(UpdateService.compareVersions('1.0.0', '2.0.0'), 1);
+      expect(UpdateService.compareVersions('1.0.0+1', 'v1.0.1+2'), 1);
+
+      // Same versions
+      expect(UpdateService.compareVersions('1.0.0', 'v1.0.0'), 0);
+      expect(UpdateService.compareVersions('1.0.0+1', 'v1.0.0'), 0);
+      expect(UpdateService.compareVersions('1.2.3', '1.2.3'), 0);
+
+      // Older versions
+      expect(UpdateService.compareVersions('1.0.1', '1.0.0'), -1);
+      expect(UpdateService.compareVersions('2.0.0', 'v1.9.9'), -1);
+    });
+
+    test('AppUpdateInfo selects recommended arm64 APK or fallback universal', () {
+      const update = AppUpdateInfo(
+        currentVersion: '1.0.0',
+        latestVersion: 'v1.0.1',
+        releaseName: 'Dayform v1.0.1',
+        releaseNotes: 'Performance improvements',
+        releaseUrl: 'https://github.com/sangeethsanthosh-git/dayform/releases/tag/v1.0.1',
+        publishedAt: '2026-09-11',
+        apkAssets: [
+          ReleaseAsset(
+            name: 'Dayform-v1.0.1-armeabi-v7a.apk',
+            size: 19000000,
+            downloadUrl: 'https://example.com/v7a.apk',
+            contentType: 'application/vnd.android.package-archive',
+          ),
+          ReleaseAsset(
+            name: 'Dayform-v1.0.1-arm64-v8a.apk',
+            size: 21000000,
+            downloadUrl: 'https://example.com/arm64.apk',
+            contentType: 'application/vnd.android.package-archive',
+          ),
+          ReleaseAsset(
+            name: 'Dayform-v1.0.1-universal.apk',
+            size: 59000000,
+            downloadUrl: 'https://example.com/universal.apk',
+            contentType: 'application/vnd.android.package-archive',
+          ),
+        ],
+        isUpdateAvailable: true,
+      );
+
+      final rec = update.recommendedAsset;
+      expect(rec, isNotNull);
+      expect(rec!.name, 'Dayform-v1.0.1-arm64-v8a.apk');
+      expect(rec.downloadUrl, 'https://example.com/arm64.apk');
+      expect(rec.formattedSize, '20.0 MB');
     });
   });
 }

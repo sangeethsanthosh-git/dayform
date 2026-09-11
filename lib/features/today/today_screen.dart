@@ -16,6 +16,7 @@ import 'widgets/mindful_starter_card.dart';
 import 'widgets/modular_today_cards.dart';
 import 'widgets/priority_tasks_section.dart';
 import 'widgets/up_next_card.dart';
+import 'widgets/update_banner.dart';
 
 class TodayScreen extends StatefulWidget {
   final AppState appState;
@@ -91,6 +92,16 @@ class _TodayScreenState extends State<TodayScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+
+                // In-App Update Banner (notified when newer version is published on GitHub)
+                if (widget.appState.availableUpdate != null &&
+                    widget.appState.availableUpdate!.isUpdateAvailable &&
+                    !widget.appState.isUpdateBannerDismissed) ...[
+                  UpdateBanner(
+                    appState: widget.appState,
+                    updateInfo: widget.appState.availableUpdate!,
+                  ),
+                ],
 
                 // Birthday Wish Banner (when today is the user's birthday)
                 if (isUserBirthday) ...[

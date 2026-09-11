@@ -15,6 +15,7 @@ import '../../domain/repositories/settings_repository.dart';
 import '../../domain/repositories/task_repository.dart';
 import '../database/app_database.dart';
 import '../notifications/notification_service.dart';
+import '../services/update_service.dart';
 import '../theme/app_colors.dart';
 import '../widget/home_widget_service.dart';
 
@@ -88,6 +89,15 @@ class AppState extends ChangeNotifier {
   bool _isLoading = true;
   bool get isLoading => _isLoading;
 
+  AppUpdateInfo? _availableUpdate;
+  AppUpdateInfo? get availableUpdate => _availableUpdate;
+
+  bool _isCheckingForUpdates = false;
+  bool get isCheckingForUpdates => _isCheckingForUpdates;
+
+  bool _isUpdateBannerDismissed = false;
+  bool get isUpdateBannerDismissed => _isUpdateBannerDismissed;
+
   String get todayDateOnly => _formatDate(DateTime.now());
   String get selectedDateOnly => _formatDate(_selectedDate);
 
@@ -112,6 +122,9 @@ class AppState extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+
+    // 4. Background check for new app versions on GitHub
+    checkForUpdates();
   }
 
   void setSelectedDate(DateTime date) {
@@ -578,5 +591,41 @@ class AppState extends ChangeNotifier {
   Future<void> clearAllData() async {
     await AppDatabase.instance.clearAllData();
     await refreshAll();
+  }
+
+  // --- App Version & GitHub Updates ---
+  Future<AppUpdateInfo?> checkForUpdates({bool isManual = false}) async {
+    _isCheckingForUpdates = true;
+    notifyListeners();
+
+    try {
+      final info = await UpdateService.instance.checkForUpdate();
+      _availableUpdate = info;
+
+      if (info != null && info.isUpdateAvailable) {
+        if (!isManual) {
+          final isDismissed =
+              await UpdateService.instance.isTagDismissed(info.latestVersion);
+          _isUpdateBannerDismissed = isDismissed;
+        } else {
+          _isUpdateBannerDismissed = false;
+        }
+      } else {
+        _isUpdateBannerDismissed = false;
+      }
+
+      return info;
+    } finally {
+      _isCheckingForUpdates = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> dismissUpdateBanner() async {
+    if (_availableUpdate != null) {
+      await UpdateService.instance.dismissTag(_availableUpdate!.latestVersion);
+    }
+    _isUpdateBannerDismissed = true;
+    notifyListeners();
   }
 }

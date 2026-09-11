@@ -119,10 +119,22 @@ class _MainScaffoldState extends State<MainScaffold> {
               label: 'My Space',
             ),
             NavigationDestination(
-              icon: const Icon(Icons.settings_outlined),
-              selectedIcon: Icon(
-                Icons.settings_rounded,
-                color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+              icon: Badge(
+                isLabelVisible: widget.appState.availableUpdate != null &&
+                    widget.appState.availableUpdate!.isUpdateAvailable,
+                smallSize: 8,
+                backgroundColor: AppColors.warmAmber,
+                child: const Icon(Icons.settings_outlined),
+              ),
+              selectedIcon: Badge(
+                isLabelVisible: widget.appState.availableUpdate != null &&
+                    widget.appState.availableUpdate!.isUpdateAvailable,
+                smallSize: 8,
+                backgroundColor: AppColors.warmAmber,
+                child: Icon(
+                  Icons.settings_rounded,
+                  color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+                ),
               ),
               label: 'Settings',
             ),

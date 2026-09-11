@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import '../../core/backup/backup_service.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/notifications/notification_service.dart';
+import '../../core/services/update_service.dart';
 import '../../core/services/widget_service.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/models/user_settings.dart';
+import '../today/widgets/update_banner.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -474,6 +476,151 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('Reset All Data'),
                   subtitle: const Text('Irreversibly delete all events, tasks and modules'),
                   onTap: () => _confirmResetAllData(context, appState),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // 7. App Updates & Version
+          _buildSectionHeader('APP UPDATES & ABOUT'),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCardSurface : AppColors.lightCardSurface,
+              borderRadius: BorderRadius.circular(AppConstants.cardRadiusMedium),
+              border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.warmAmber.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.system_update_rounded, color: AppColors.warmAmber, size: 20),
+                  ),
+                  title: Row(
+                    children: [
+                      const Text(
+                        'Dayform Version',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurfaceMuted : AppColors.pillLight,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          ),
+                        ),
+                        child: const Text(
+                          'v${AppConstants.appVersion}',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  subtitle: Text(
+                    appState.availableUpdate != null && appState.availableUpdate!.isUpdateAvailable
+                        ? 'New version ${appState.availableUpdate!.latestVersion} available!'
+                        : 'Checking GitHub releases for latest builds',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: appState.availableUpdate != null && appState.availableUpdate!.isUpdateAvailable
+                          ? AppColors.warmAmber
+                          : null,
+                      fontWeight: appState.availableUpdate != null && appState.availableUpdate!.isUpdateAvailable
+                          ? FontWeight.w600
+                          : null,
+                    ),
+                  ),
+                  trailing: appState.isCheckingForUpdates
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : TextButton(
+                          onPressed: () async {
+                            final info = await appState.checkForUpdates(isManual: true);
+                            if (!context.mounted) return;
+                            if (info == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Could not reach GitHub releases. Check your internet connection.')),
+                              );
+                            } else if (info.isUpdateAvailable) {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => UpdateDetailsSheet(updateInfo: info),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Dayform is up to date (v${AppConstants.appVersion}).'),
+                                ),
+                              );
+                            }
+                          },
+                          child: const Text('Check Now'),
+                        ),
+                ),
+                if (appState.availableUpdate != null && appState.availableUpdate!.isUpdateAvailable) ...[
+                  const Divider(),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.teal.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.download_rounded, color: AppColors.teal, size: 20),
+                    ),
+                    title: Text(
+                      'Download ${appState.availableUpdate!.latestVersion}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text('Direct APK download from GitHub Releases'),
+                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => UpdateDetailsSheet(updateInfo: appState.availableUpdate!),
+                      );
+                    },
+                  ),
+                ],
+                const Divider(),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.open_in_browser_rounded,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                      size: 20,
+                    ),
+                  ),
+                  title: const Text('GitHub Repository & Releases'),
+                  subtitle: const Text('View source code, commits, and all release downloads'),
+                  trailing: const Icon(Icons.launch_rounded, size: 16),
+                  onTap: () {
+                    UpdateService.instance.launchDownloadUrl(AppConstants.githubReleasesUrl);
+                  },
                 ),
               ],
             ),
