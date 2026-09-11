@@ -125,8 +125,11 @@ class AppState extends ChangeNotifier {
 
     // 1. Events & Reminders
     for (final event in _allEvents) {
-      if (event.reminderMinutesBefore != null && event.startDateTime.isAfter(now)) {
-        var reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
+      if (event.reminderMinutesBefore != null &&
+          event.startDateTime.isAfter(now)) {
+        var reminderTime = event.startDateTime.subtract(
+          Duration(minutes: event.reminderMinutesBefore!),
+        );
         if (reminderTime.isBefore(now)) {
           reminderTime = event.startDateTime;
         }
@@ -136,7 +139,8 @@ class AppState extends ChangeNotifier {
             id: event.id.hashCode,
             title: isReminder ? event.title : 'Upcoming: ${event.title}',
             body: isReminder
-                ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
+                ? (event.notes ??
+                      'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
                 : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
             scheduledDate: reminderTime,
             payload: 'event_${event.id}',
@@ -148,10 +152,16 @@ class AppState extends ChangeNotifier {
     // 2. Tasks with due dates & reminders
     final allTasks = [..._todayTasks, ..._upcomingTasks, ..._inboxTasks];
     for (final task in allTasks) {
-      if (!task.isCompleted && task.dueDate != null && task.reminderMinutesBefore != null) {
-        final dueDateTime = DateTime.tryParse("${task.dueDate} ${task.dueTime ?? '09:00'}:00");
+      if (!task.isCompleted &&
+          task.dueDate != null &&
+          task.reminderMinutesBefore != null) {
+        final dueDateTime = DateTime.tryParse(
+          "${task.dueDate} ${task.dueTime ?? '09:00'}:00",
+        );
         if (dueDateTime != null && dueDateTime.isAfter(now)) {
-          var reminderTime = dueDateTime.subtract(Duration(minutes: task.reminderMinutesBefore!));
+          var reminderTime = dueDateTime.subtract(
+            Duration(minutes: task.reminderMinutesBefore!),
+          );
           if (reminderTime.isBefore(now)) {
             reminderTime = dueDateTime;
           }
@@ -177,7 +187,8 @@ class AppState extends ChangeNotifier {
           await NotificationService.instance.scheduleNotification(
             id: bill.id.hashCode,
             title: '💳 Upcoming Payment Due: ${bill.name}',
-            body: 'Payment of ${bill.currency} ${bill.amount.toStringAsFixed(2)} is due today.',
+            body:
+                'Payment of ${bill.currency} ${bill.amount.toStringAsFixed(2)} is due today.',
             scheduledDate: billReminder,
             payload: 'bill_${bill.id}',
           );
@@ -278,7 +289,9 @@ class AppState extends ChangeNotifier {
     final now = DateTime.now();
     final todayStr = todayDateOnly;
 
-    final todayEvents = _allEvents.where((e) => e.dateOnly == todayStr).toList();
+    final todayEvents = _allEvents
+        .where((e) => e.dateOnly == todayStr)
+        .toList();
     todayEvents.sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
 
     _upNextEvent = null;
@@ -295,7 +308,9 @@ class AppState extends ChangeNotifier {
     await scheduleRepo.insertEvent(event);
     if (event.reminderMinutesBefore != null) {
       final now = DateTime.now();
-      var reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
+      var reminderTime = event.startDateTime.subtract(
+        Duration(minutes: event.reminderMinutesBefore!),
+      );
       if (reminderTime.isBefore(now) && event.startDateTime.isAfter(now)) {
         reminderTime = event.startDateTime;
       }
@@ -305,7 +320,8 @@ class AppState extends ChangeNotifier {
           id: event.id.hashCode,
           title: isReminder ? event.title : 'Upcoming: ${event.title}',
           body: isReminder
-              ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
+              ? (event.notes ??
+                    'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
               : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
           scheduledDate: reminderTime,
           payload: 'event_${event.id}',
@@ -320,7 +336,9 @@ class AppState extends ChangeNotifier {
     await NotificationService.instance.cancelNotification(event.id.hashCode);
     if (event.reminderMinutesBefore != null) {
       final now = DateTime.now();
-      var reminderTime = event.startDateTime.subtract(Duration(minutes: event.reminderMinutesBefore!));
+      var reminderTime = event.startDateTime.subtract(
+        Duration(minutes: event.reminderMinutesBefore!),
+      );
       if (reminderTime.isBefore(now) && event.startDateTime.isAfter(now)) {
         reminderTime = event.startDateTime;
       }
@@ -330,7 +348,8 @@ class AppState extends ChangeNotifier {
           id: event.id.hashCode,
           title: isReminder ? event.title : 'Upcoming: ${event.title}',
           body: isReminder
-              ? (event.notes ?? 'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
+              ? (event.notes ??
+                    'Scheduled for ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}')
               : 'Starts at ${event.startDateTime.hour.toString().padLeft(2, '0')}:${event.startDateTime.minute.toString().padLeft(2, '0')}${event.location != null ? ' • ${event.location}' : ''}',
           scheduledDate: reminderTime,
           payload: 'event_${event.id}',
@@ -347,7 +366,11 @@ class AppState extends ChangeNotifier {
   }
 
   // Conflict Detection for Schedule Planning
-  List<EventItem> checkEventConflicts(DateTime start, DateTime end, {String? excludeEventId}) {
+  List<EventItem> checkEventConflicts(
+    DateTime start,
+    DateTime end, {
+    String? excludeEventId,
+  }) {
     return _allEvents.where((e) {
       if (excludeEventId != null && e.id == excludeEventId) return false;
       if (e.isAllDay) return false;
@@ -360,10 +383,14 @@ class AppState extends ChangeNotifier {
   Future<void> addTask(TaskItem task) async {
     await taskRepo.insertTask(task);
     if (task.dueDate != null && task.reminderMinutesBefore != null) {
-      final dueDateTime = DateTime.tryParse("${task.dueDate} ${task.dueTime ?? '09:00'}:00");
+      final dueDateTime = DateTime.tryParse(
+        "${task.dueDate} ${task.dueTime ?? '09:00'}:00",
+      );
       if (dueDateTime != null) {
         final now = DateTime.now();
-        var reminderTime = dueDateTime.subtract(Duration(minutes: task.reminderMinutesBefore!));
+        var reminderTime = dueDateTime.subtract(
+          Duration(minutes: task.reminderMinutesBefore!),
+        );
         if (reminderTime.isBefore(now) && dueDateTime.isAfter(now)) {
           reminderTime = dueDateTime;
         }
@@ -383,6 +410,21 @@ class AppState extends ChangeNotifier {
 
   Future<void> toggleTask(String taskId, bool isCompleted) async {
     await taskRepo.toggleTaskCompletion(taskId, isCompleted);
+    if (isCompleted) {
+      await NotificationService.instance.cancelNotification(taskId.hashCode);
+    }
+    await refreshAll();
+  }
+
+  /// Handles actions from system notifications without requiring a new app UI.
+  Future<void> completeItemFromNotification(String payload) async {
+    if (!payload.startsWith('task_')) return;
+
+    final taskId = payload.substring('task_'.length);
+    if (taskId.isEmpty) return;
+
+    await taskRepo.toggleTaskCompletion(taskId, true);
+    await NotificationService.instance.cancelNotification(taskId.hashCode);
     await refreshAll();
   }
 
@@ -393,7 +435,11 @@ class AppState extends ChangeNotifier {
   }
 
   // Plan This Task into Calendar
-  Future<void> planTaskIntoCalendar(TaskItem task, DateTime start, DateTime end) async {
+  Future<void> planTaskIntoCalendar(
+    TaskItem task,
+    DateTime start,
+    DateTime end,
+  ) async {
     const uuid = Uuid();
     final eventId = uuid.v4();
     final dateOnly = _formatDate(start);
@@ -425,7 +471,8 @@ class AppState extends ChangeNotifier {
         await NotificationService.instance.scheduleNotification(
           id: bill.id.hashCode,
           title: '💳 Upcoming Payment Due: ${bill.name}',
-          body: 'Payment of ${bill.currency} ${bill.amount.toStringAsFixed(2)} is due today.',
+          body:
+              'Payment of ${bill.currency} ${bill.amount.toStringAsFixed(2)} is due today.',
           scheduledDate: billReminder,
           payload: 'bill_${bill.id}',
         );
@@ -434,7 +481,11 @@ class AppState extends ChangeNotifier {
     await refreshAll();
   }
 
-  Future<void> markBillPaid(String billId, double amount, String currency) async {
+  Future<void> markBillPaid(
+    String billId,
+    double amount,
+    String currency,
+  ) async {
     final today = todayDateOnly;
     await billRepo.recordPayment(billId, today, amount, currency);
     await refreshAll();

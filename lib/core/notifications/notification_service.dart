@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -7,14 +8,34 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../constants/app_constants.dart';
 
+typedef NotificationInteractionCallback =
+    Future<void> Function(String? payload, String? actionId);
+
 class NotificationService {
   static final NotificationService instance = NotificationService._internal();
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
+  NotificationInteractionCallback? _onNotificationInteraction;
 
-  Future<void> initialize({Function(String? payload)? onNotificationTapped}) async {
+  static const String _snoozeActionId = 'action_snooze';
+  static const String _completeActionId = 'action_complete';
+  static const String _payloadMarker = 'dayform_notification_v1';
+  static const List<String> _legacyAndroidChannelIds = [
+    'dayform_reminders',
+    'dayform_reminders_tune',
+    'dayform_reminders_chime_v2',
+    'dayform_alarms_v4',
+  ];
+
+  Future<void> initialize({
+    NotificationInteractionCallback? onNotificationInteraction,
+  }) async {
+    if (onNotificationInteraction != null) {
+      _onNotificationInteraction = onNotificationInteraction;
+    }
     if (_isInitialized) return;
 
     // Initialize TimeZone database and detect device's local location
@@ -35,7 +56,9 @@ class NotificationService {
         }
       }
     } catch (e) {
-      debugPrint('Could not set system timezone ($e), matching by device offset.');
+      debugPrint(
+        'Could not set system timezone ($e), matching by device offset.',
+      );
       final offset = DateTime.now().timeZoneOffset;
       for (final loc in tz.timeZoneDatabase.locations.values) {
         if (loc.currentTimeZone.offset == offset) {
@@ -46,39 +69,51 @@ class NotificationService {
     }
 
     // Android Setup
-    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // Darwin / iOS Setup
-    const DarwinInitializationSettings darwinSettings = DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
+    const DarwinInitializationSettings darwinSettings =
+        DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        );
+
+    const WindowsInitializationSettings windowsSettings =
+        WindowsInitializationSettings(
+          appName: AppConstants.appName,
+          appUserModelId: 'Dayform.Calendar.Desktop',
+          guid: '5d669a47-b4c1-4f43-bf72-612c8f27b68b',
+        );
 
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
       iOS: darwinSettings,
+      macOS: darwinSettings,
+      windows: windowsSettings,
     );
 
     await _notificationsPlugin.initialize(
       settings: initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        if (response.payload != null && onNotificationTapped != null) {
-          onNotificationTapped(response.payload);
-        }
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        await _handleNotificationResponse(response);
       },
     );
 
     if (!kIsWeb && Platform.isAndroid) {
-      final androidImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidImpl != null) {
-        // Clear any old or stale channels so fresh channel settings apply
-        try {
-          await androidImpl.deleteNotificationChannel(channelId: 'dayform_reminders_chime_v2');
-          await androidImpl.deleteNotificationChannel(channelId: 'dayform_reminders_tune');
-          await androidImpl.deleteNotificationChannel(channelId: 'dayform_reminders');
-        } catch (_) {}
+        // Retire only old channel versions. Deleting the active channel on every
+        // launch would also discard the user's current channel preferences.
+        for (final channelId in _legacyAndroidChannelIds) {
+          try {
+            await androidImpl.deleteNotificationChannel(channelId: channelId);
+          } catch (_) {}
+        }
 
         final AndroidNotificationChannel channel = AndroidNotificationChannel(
           AppConstants.reminderChannelId,
@@ -97,28 +132,65 @@ class NotificationService {
       }
     }
 
-    // Prompt for notification & exact alarm permissions
-    await requestPermissions();
+    // The exact-alarm settings screen should only be opened after an explicit
+    // reminder action. At startup we request just the ordinary alert permission.
+    await requestPermissions(requestExactAlarm: false);
 
     _isInitialized = true;
+
+    // The regular response callback is not invoked when a notification launches
+    // a terminated app, so process that response explicitly as well.
+    final launchDetails = await _notificationsPlugin
+        .getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      final response = launchDetails?.notificationResponse;
+      if (response != null) {
+        await _handleNotificationResponse(response);
+      }
+    }
   }
 
-  Future<bool> requestPermissions() async {
+  Future<bool> requestPermissions({bool requestExactAlarm = true}) async {
     if (kIsWeb) return false;
 
     if (Platform.isAndroid) {
-      final androidImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidImpl != null) {
-        final granted = await androidImpl.requestNotificationsPermission();
-        await androidImpl.requestExactAlarmsPermission();
-        return granted ?? false;
+        final notificationsGranted =
+            await androidImpl.requestNotificationsPermission() ?? false;
+        if (!requestExactAlarm) return notificationsGranted;
+
+        var exactAlarmGranted =
+            await androidImpl.canScheduleExactNotifications() ?? false;
+        if (!exactAlarmGranted) {
+          exactAlarmGranted =
+              await androidImpl.requestExactAlarmsPermission() ?? false;
+        }
+        return notificationsGranted && exactAlarmGranted;
       }
-    } else if (Platform.isIOS || Platform.isMacOS) {
-      final iosImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+    } else if (Platform.isIOS) {
+      final iosImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       if (iosImpl != null) {
         final granted = await iosImpl.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        return granted ?? false;
+      }
+    } else if (Platform.isMacOS) {
+      final macOSImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >();
+      if (macOSImpl != null) {
+        final granted = await macOSImpl.requestPermissions(
           alert: true,
           badge: true,
           sound: true,
@@ -132,22 +204,74 @@ class NotificationService {
   Future<bool> areNotificationsEnabled() async {
     if (kIsWeb) return false;
     if (Platform.isAndroid) {
-      final androidImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       return await androidImpl?.areNotificationsEnabled() ?? false;
     }
     return true;
   }
 
+  Future<void> _handleNotificationResponse(
+    NotificationResponse response,
+  ) async {
+    final notificationData = _decodePayload(response.payload);
+    final originalPayload = notificationData['payload'] as String?;
+
+    if (response.actionId == _snoozeActionId) {
+      await scheduleNotification(
+        id: response.id ?? 0,
+        title: notificationData['title'] as String? ?? 'Snoozed reminder',
+        body:
+            notificationData['body'] as String? ??
+            'Your reminder is due again.',
+        scheduledDate: DateTime.now().add(const Duration(minutes: 10)),
+        payload: originalPayload,
+      );
+      return;
+    }
+
+    await _onNotificationInteraction?.call(originalPayload, response.actionId);
+  }
+
+  String _encodePayload({
+    required String title,
+    required String body,
+    String? payload,
+  }) {
+    return jsonEncode({
+      'marker': _payloadMarker,
+      'payload': payload,
+      'title': title,
+      'body': body,
+    });
+  }
+
+  Map<String, Object?> _decodePayload(String? encodedPayload) {
+    if (encodedPayload == null || encodedPayload.isEmpty) {
+      return const <String, Object?>{};
+    }
+    try {
+      final decoded = jsonDecode(encodedPayload);
+      if (decoded is Map && decoded['marker'] == _payloadMarker) {
+        return Map<String, Object?>.from(decoded);
+      }
+    } catch (_) {
+      // Notifications scheduled by earlier app versions contain a plain payload.
+    }
+    return <String, Object?>{'payload': encodedPayload};
+  }
+
   // Schedule a notification at exact local time
-  Future<void> scheduleNotification({
+  Future<bool> scheduleNotification({
     required int id,
     required String title,
     required String body,
     required DateTime scheduledDate,
     String? payload,
   }) async {
-    if (kIsWeb) return;
+    if (kIsWeb) return false;
 
     if (!_isInitialized) {
       await initialize();
@@ -157,55 +281,89 @@ class NotificationService {
     DateTime effectiveDate = scheduledDate;
 
     // Do not schedule notifications for times already in the past
-    if (effectiveDate.isBefore(now)) {
-      return;
+    if (!effectiveDate.isAfter(now)) {
+      return false;
     }
 
     final tzNow = tz.TZDateTime.now(tz.local);
     final tzScheduledDate = tz.TZDateTime.from(effectiveDate, tz.local);
 
     // Exact alarms on Android MUST be strictly in the future
-    if (tzScheduledDate.isBefore(tzNow) || tzScheduledDate.difference(tzNow).inSeconds < 1) {
-      return;
+    if (tzScheduledDate.isBefore(tzNow) ||
+        tzScheduledDate.difference(tzNow).inSeconds < 1) {
+      return false;
     }
 
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      AppConstants.reminderChannelId,
-      AppConstants.reminderChannelName,
-      channelDescription: AppConstants.reminderChannelDesc,
-      importance: Importance.max,
-      priority: Priority.max,
-      showWhen: true,
-      playSound: true,
-      sound: const RawResourceAndroidNotificationSound('reminder_chime'),
-      enableVibration: true,
-      vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
-      audioAttributesUsage: AudioAttributesUsage.alarm,
-      category: AndroidNotificationCategory.alarm,
-      fullScreenIntent: true,
-      actions: const <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'action_snooze',
-          'Snooze 10m',
-          showsUserInterface: true,
-        ),
-        AndroidNotificationAction(
-          'action_complete',
-          'Complete',
-          showsUserInterface: false,
-        ),
-      ],
+    final notificationPayload = _encodePayload(
+      title: title,
+      body: body,
+      payload: payload,
     );
 
-    final NotificationDetails notificationDetails = NotificationDetails(
+    final actions = <AndroidNotificationAction>[
+      const AndroidNotificationAction(
+        _snoozeActionId,
+        'Snooze 10m',
+        showsUserInterface: true,
+      ),
+      if (payload?.startsWith('task_') ?? false)
+        const AndroidNotificationAction(
+          _completeActionId,
+          'Complete',
+          showsUserInterface: true,
+        ),
+    ];
+
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          AppConstants.reminderChannelId,
+          AppConstants.reminderChannelName,
+          channelDescription: AppConstants.reminderChannelDesc,
+          importance: Importance.max,
+          priority: Priority.max,
+          showWhen: true,
+          playSound: true,
+          sound: const RawResourceAndroidNotificationSound('reminder_chime'),
+          enableVibration: true,
+          vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+          category: AndroidNotificationCategory.alarm,
+          ticker: title,
+          actions: actions,
+        );
+
+    final notificationDetails = NotificationDetails(
       android: androidDetails,
       iOS: const DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
-        sound: 'reminder_chime.wav',
+      ),
+      macOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+      windows: WindowsNotificationDetails(
+        audio: WindowsNotificationAudio.preset(
+          sound: WindowsNotificationSound.reminder,
+        ),
+        duration: WindowsNotificationDuration.long,
       ),
     );
+
+    var androidScheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+    if (!kIsWeb && Platform.isAndroid) {
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      final canScheduleExact =
+          await androidImpl?.canScheduleExactNotifications() ?? false;
+      if (canScheduleExact) {
+        androidScheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+      }
+    }
 
     try {
       await _notificationsPlugin.zonedSchedule(
@@ -214,23 +372,15 @@ class NotificationService {
         body: body,
         scheduledDate: tzScheduledDate,
         notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.alarmClock,
-        payload: payload,
+        androidScheduleMode: androidScheduleMode,
+        payload: notificationPayload,
       );
+      return true;
     } catch (e) {
-      debugPrint('AlarmClock mode failed ($e), falling back to exactAllowWhileIdle');
-      try {
-        await _notificationsPlugin.zonedSchedule(
-          id: id,
-          title: title,
-          body: body,
-          scheduledDate: tzScheduledDate,
-          notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          payload: payload,
+      if (androidScheduleMode == AndroidScheduleMode.exactAllowWhileIdle) {
+        debugPrint(
+          'Exact notification scheduling failed ($e); using inexact delivery.',
         );
-      } catch (e2) {
-        debugPrint('Exact mode failed ($e2), falling back to inexact mode');
         try {
           await _notificationsPlugin.zonedSchedule(
             id: id,
@@ -239,12 +389,16 @@ class NotificationService {
             scheduledDate: tzScheduledDate,
             notificationDetails: notificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-            payload: payload,
+            payload: notificationPayload,
           );
+          return true;
         } catch (err) {
-          debugPrint('All notification schedule attempts failed: $err');
+          debugPrint('Notification scheduling failed: $err');
+          return false;
         }
       }
+      debugPrint('Notification scheduling failed: $e');
+      return false;
     }
   }
 
@@ -308,28 +462,38 @@ class NotificationService {
     }
     await requestPermissions();
 
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      AppConstants.reminderChannelId,
-      AppConstants.reminderChannelName,
-      channelDescription: AppConstants.reminderChannelDesc,
-      importance: Importance.max,
-      priority: Priority.max,
-      playSound: true,
-      sound: const RawResourceAndroidNotificationSound('reminder_chime'),
-      enableVibration: true,
-      vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
-      audioAttributesUsage: AudioAttributesUsage.alarm,
-      category: AndroidNotificationCategory.alarm,
-      fullScreenIntent: true,
-    );
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          AppConstants.reminderChannelId,
+          AppConstants.reminderChannelName,
+          channelDescription: AppConstants.reminderChannelDesc,
+          importance: Importance.max,
+          priority: Priority.max,
+          playSound: true,
+          sound: const RawResourceAndroidNotificationSound('reminder_chime'),
+          enableVibration: true,
+          vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+          category: AndroidNotificationCategory.alarm,
+        );
 
-    final NotificationDetails details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: const DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
-        sound: 'reminder_chime.wav',
+      ),
+      macOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+      windows: WindowsNotificationDetails(
+        audio: WindowsNotificationAudio.preset(
+          sound: WindowsNotificationSound.reminder,
+        ),
+        duration: WindowsNotificationDuration.long,
       ),
     );
 
@@ -337,7 +501,8 @@ class NotificationService {
       await _notificationsPlugin.show(
         id: 99999,
         title: 'Dayform Chime Reminder 🔔',
-        body: 'Your reminder chime tune and triple-pulse vibration are active and loud!',
+        body:
+            'Your reminder chime tune and triple-pulse vibration are active and loud!',
         notificationDetails: details,
       );
     } catch (e) {
@@ -358,7 +523,8 @@ class NotificationService {
     await scheduleNotification(
       id: 88888,
       title: '⏰ Test Reminder Alarm ($delaySeconds sec)',
-      body: 'Success! Scheduled alarm, vibration and chime triggered right on time!',
+      body:
+          'Success! Scheduled alarm, vibration and chime triggered right on time!',
       scheduledDate: scheduledDate,
       payload: 'test_alarm_payload',
     );

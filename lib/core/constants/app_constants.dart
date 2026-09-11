@@ -8,9 +8,13 @@ class AppConstants {
   static const int databaseVersion = 1;
 
   // Notification Channels
-  static const String reminderChannelId = 'dayform_alarms_v4';
+  // Android notification-channel settings cannot be changed after the channel
+  // has been created. Keep this versioned so sound/vibration fixes reach users
+  // who already have an older, silent channel on their device.
+  static const String reminderChannelId = 'dayform_alarms_v5';
   static const String reminderChannelName = 'Dayform Reminders & Alarms';
-  static const String reminderChannelDesc = 'Loud chime alert for time-sensitive reminders, tasks and calendar events';
+  static const String reminderChannelDesc =
+      'Loud chime alert for time-sensitive reminders, tasks and calendar events';
 
   // Layout & Styling constants
   static const double cardRadiusLarge = 28.0;

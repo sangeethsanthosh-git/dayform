@@ -14,9 +14,6 @@ import 'domain/repositories/task_repository.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize notifications
-  await NotificationService.instance.initialize();
-
   // Repositories
   final appDb = AppDatabase.instance;
   final scheduleRepo = ScheduleRepository(appDb);
@@ -36,6 +33,16 @@ void main() async {
     habitRepo: habitRepo,
     focusRepo: focusRepo,
     settingsRepo: settingsRepo,
+  );
+
+  // Initialize notifications after AppState exists so notification actions can
+  // update their matching task even when the alert launched the app.
+  await NotificationService.instance.initialize(
+    onNotificationInteraction: (payload, actionId) async {
+      if (actionId == 'action_complete' && payload != null) {
+        await appState.completeItemFromNotification(payload);
+      }
+    },
   );
 
   // Initialize state and durable database
