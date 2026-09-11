@@ -552,7 +552,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             if (!context.mounted) return;
                             if (info == null) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Could not reach GitHub releases. Check your internet connection.')),
+                                const SnackBar(content: Text('Could not reach GitHub releases. Please check your internet connection.')),
                               );
                             } else if (info.isUpdateAvailable) {
                               showModalBottomSheet(
@@ -562,9 +562,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 builder: (_) => UpdateDetailsSheet(updateInfo: info),
                               );
                             } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Dayform is up to date (v${AppConstants.appVersion}).'),
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: Row(
+                                    children: [
+                                      Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 24),
+                                      const SizedBox(width: 8),
+                                      const Text('Up to Date'),
+                                    ],
+                                  ),
+                                  content: Text(
+                                    'You are running Dayform v${AppConstants.appVersion}.\n\nLatest release on GitHub is ${info.latestVersion}.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        UpdateService.instance.launchDownloadUrl(info.releaseUrl);
+                                      },
+                                      child: const Text('View Releases'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
                                 ),
                               );
                             }

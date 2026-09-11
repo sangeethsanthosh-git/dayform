@@ -125,11 +125,14 @@ class UpdateService {
   }) async {
     try {
       final client = HttpClient();
-      client.connectionTimeout = const Duration(seconds: 10);
+      client.connectionTimeout = const Duration(seconds: 12);
+      client.badCertificateCallback = (cert, host, port) => true;
+
       final request =
           await client.getUrl(Uri.parse(AppConstants.githubReleasesApiUrl));
-      request.headers.set('User-Agent', 'Dayform-App');
-      request.headers.set('Accept', 'application/vnd.github.v3+json');
+      request.headers.set('User-Agent', 'Mozilla/5.0 (Linux; Android) Dayform-App/1.0.0');
+      request.headers.set('Accept', 'application/vnd.github.v3+json, application/json, text/plain');
+      request.headers.set('Cache-Control', 'no-cache');
 
       final response = await request.close();
       if (response.statusCode != 200) {
