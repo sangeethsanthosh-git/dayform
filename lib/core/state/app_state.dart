@@ -14,7 +14,6 @@ import '../../domain/repositories/schedule_repository.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../../domain/repositories/task_repository.dart';
 import '../database/app_database.dart';
-import '../database/sample_data.dart';
 import '../notifications/notification_service.dart';
 import '../theme/app_colors.dart';
 import '../widget/home_widget_service.dart';
@@ -574,17 +573,6 @@ class AppState extends ChangeNotifier {
       await rescheduleAllUpcomingReminders();
     }
     notifyListeners();
-  }
-
-  Future<void> loadSampleData() async {
-    await SampleDataSeeder.seedIfEmpty(
-      scheduleRepo: scheduleRepo,
-      taskRepo: taskRepo,
-      billRepo: billRepo,
-      birthdayRepo: birthdayRepo,
-      habitRepo: habitRepo,
-    );
-    await refreshAll();
   }
 
   Future<void> clearAllData() async {

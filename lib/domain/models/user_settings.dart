@@ -173,7 +173,7 @@ class UserSettings {
     bool resolvedOnboarding = false;
     if (hasOnboarded != null) {
       resolvedOnboarding = (hasOnboarded as int? ?? 0) == 1;
-    } else if (rawName != null && rawName.isNotEmpty && rawName != 'Alex') {
+    } else if (rawName != null && rawName.isNotEmpty) {
       resolvedOnboarding = true;
     }
 

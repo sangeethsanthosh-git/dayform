@@ -438,57 +438,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     appState.updateSettings(settings.copyWith(quietHoursEnabled: val));
                   },
                 ),
-                const SizedBox(height: 12),
-
-                // Instant test notification
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await NotificationService.instance.sendImmediateTestNotification();
-                    if (context.mounted) {
-                      final activeTone =
-                          AppConstants.getToneOption(settings.notificationTone);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${activeTone.title} notification dispatched! Look at your heads-up alert banner.',
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.notifications_active_rounded, size: 18),
-                  label: Text(
-                    'Instant Test (${AppConstants.getToneOption(settings.notificationTone).title})',
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 44),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Scheduled 5-second test alarm (verifies background/lockscreen wake)
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await NotificationService.instance.scheduleTestNotification(delaySeconds: 5);
-                    if (context.mounted) {
-                      final activeTone =
-                          AppConstants.getToneOption(settings.notificationTone);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${activeTone.title} scheduled in 5 seconds! You can lock screen or leave app now to test wake.',
-                          ),
-                          duration: const Duration(seconds: 4),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.alarm_rounded, size: 18),
-                  label: const Text('Schedule 5s Test Alarm (Lock/Sleep Test)'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 44),
-                  ),
-                ),
               ],
             ),
           ),
@@ -505,21 +454,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Column(
               children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.auto_awesome_rounded, color: AppColors.warmAmber),
-                  title: const Text('Load Demo Data'),
-                  subtitle: const Text('Populate realistic sample events, tasks and bills'),
-                  onTap: () async {
-                    await appState.loadSampleData();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Demo sample data loaded successfully!')),
-                      );
-                    }
-                  },
-                ),
-                const Divider(),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.download_rounded, color: AppColors.teal),
