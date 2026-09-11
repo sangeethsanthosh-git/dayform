@@ -18,7 +18,7 @@ class AppConstants {
   // Centralized branding token - easy to change
   static const String appName = 'Dayform';
   static const String appTagline = 'Your day, beautifully organized';
-  static const String appVersion = '1.0.2';
+  static const String appVersion = '1.0.3';
 
   // Developer & Support Details
   static const String developerName = 'Sangeeth Santhosh S A';
@@ -46,7 +46,7 @@ class AppConstants {
   // Android notification-channel settings cannot be changed after the channel
   // has been created. Keep this versioned so sound/vibration fixes reach users
   // who already have an older, silent channel on their device.
-  static const String reminderChannelId = 'dayform_alarms_v5';
+  static const String reminderChannelId = 'dayform_reminders_v6';
   static const String reminderChannelName = 'Dayform Reminders & Alarms';
   static const String reminderChannelDesc =
       'Loud chime alert for time-sensitive reminders, tasks and calendar events';
@@ -57,42 +57,42 @@ class AppConstants {
       id: 'chime',
       title: 'Classic Chime',
       description: 'Warm 3-tone harmonic chime (Default)',
-      channelId: 'dayform_tone_chime_v1',
+      channelId: 'dayform_tone_chime_v2',
       rawSoundName: 'reminder_chime',
     ),
     NotificationToneOption(
       id: 'bell',
       title: 'Crystal Bell',
       description: 'Crisp, high-clarity ringing bell',
-      channelId: 'dayform_tone_bell_v1',
+      channelId: 'dayform_tone_bell_v2',
       rawSoundName: 'reminder_bell',
     ),
     NotificationToneOption(
       id: 'marimba',
       title: 'Gentle Marimba',
       description: 'Soft wooden acoustic triad arpeggio',
-      channelId: 'dayform_tone_marimba_v1',
+      channelId: 'dayform_tone_marimba_v2',
       rawSoundName: 'reminder_marimba',
     ),
     NotificationToneOption(
       id: 'electronic',
       title: 'Digital Pulse',
       description: 'Modern energetic dual-pulse synth',
-      channelId: 'dayform_tone_electronic_v1',
+      channelId: 'dayform_tone_electronic_v2',
       rawSoundName: 'reminder_electronic',
     ),
     NotificationToneOption(
       id: 'zen',
       title: 'Zen Singing Bowl',
       description: 'Tranquil ambient gong & meditative resonance',
-      channelId: 'dayform_tone_zen_v1',
+      channelId: 'dayform_tone_zen_v2',
       rawSoundName: 'reminder_zen',
     ),
     NotificationToneOption(
       id: 'system',
       title: 'Device Default',
       description: 'Standard Android notification sound',
-      channelId: 'dayform_tone_system_v1',
+      channelId: 'dayform_tone_system_v2',
       rawSoundName: null,
     ),
   ];
@@ -116,4 +116,3 @@ class AppConstants {
   static const String defaultCurrency = 'INR';
   static const String defaultCurrencySymbol = '₹';
 }
-

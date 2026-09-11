@@ -41,6 +41,8 @@ android {
                 keyPassword = keyPasswordProp
                 storeFile = file(storeFileProp)
                 storePassword = storePasswordProp
+                enableV1Signing = true
+                enableV2Signing = true
             }
         }
     }

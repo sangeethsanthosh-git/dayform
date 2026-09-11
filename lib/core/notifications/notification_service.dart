@@ -35,6 +35,13 @@ class NotificationService {
     'dayform_reminders_tune',
     'dayform_reminders_chime_v2',
     'dayform_alarms_v4',
+    'dayform_alarms_v5',
+    'dayform_tone_chime_v1',
+    'dayform_tone_bell_v1',
+    'dayform_tone_marimba_v1',
+    'dayform_tone_electronic_v1',
+    'dayform_tone_zen_v1',
+    'dayform_tone_system_v1',
   ];
 
   Future<void> initialize({
@@ -134,7 +141,9 @@ class NotificationService {
           vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
           enableLights: true,
           showBadge: true,
-          audioAttributesUsage: AudioAttributesUsage.alarm,
+          // Use the notification-volume stream. Several OEM builds keep alarm
+          // volume muted independently, which made otherwise valid tones silent.
+          audioAttributesUsage: AudioAttributesUsage.notification,
         );
         await androidImpl.createNotificationChannel(defaultChannel);
 
@@ -153,7 +162,7 @@ class NotificationService {
             vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
             enableLights: true,
             showBadge: true,
-            audioAttributesUsage: AudioAttributesUsage.alarm,
+            audioAttributesUsage: AudioAttributesUsage.notification,
           );
           await androidImpl.createNotificationChannel(toneChannel);
         }
@@ -359,8 +368,8 @@ class NotificationService {
               : null,
           enableVibration: true,
           vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-          category: AndroidNotificationCategory.alarm,
+          audioAttributesUsage: AudioAttributesUsage.notification,
+          category: AndroidNotificationCategory.reminder,
           ticker: title,
           actions: actions,
         );
@@ -510,8 +519,8 @@ class NotificationService {
               : null,
           enableVibration: true,
           vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 500]),
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-          category: AndroidNotificationCategory.alarm,
+          audioAttributesUsage: AudioAttributesUsage.notification,
+          category: AndroidNotificationCategory.reminder,
         );
 
     final details = NotificationDetails(
