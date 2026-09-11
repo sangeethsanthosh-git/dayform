@@ -6,6 +6,7 @@ import '../../domain/models/bill_item.dart';
 import '../../domain/models/event_item.dart';
 import '../../domain/models/task_item.dart';
 import '../quick_add/quick_add_sheet.dart';
+import '../settings/settings_screen.dart';
 import 'widgets/birthday_celebration_card.dart';
 import 'widgets/chronological_agenda.dart';
 import 'widgets/editorial_date_header.dart';
@@ -72,7 +73,6 @@ class _TodayScreenState extends State<TodayScreen> {
                     }
                   },
                   onAddPressed: () => _openQuickAdd(context, initialTab: 0),
-                  onSearchPressed: () => _showSearchDialog(context),
                 ),
                 const SizedBox(height: 16),
 
@@ -80,6 +80,15 @@ class _TodayScreenState extends State<TodayScreen> {
                 GreetingHeader(
                   userName: widget.appState.settings.userName,
                   onSearchTapped: () => _showSearchDialog(context),
+                  onSettingsTapped: () {
+                    if (widget.onNavigateToTab != null) {
+                      widget.onNavigateToTab!(4);
+                    } else {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                      );
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
 

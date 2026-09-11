@@ -5,11 +5,13 @@ import '../../settings/settings_screen.dart';
 class GreetingHeader extends StatelessWidget {
   final String userName;
   final VoidCallback onSearchTapped;
+  final VoidCallback? onSettingsTapped;
 
   const GreetingHeader({
     super.key,
     required this.userName,
     required this.onSearchTapped,
+    this.onSettingsTapped,
   });
 
   @override
@@ -69,7 +71,7 @@ class GreetingHeader extends StatelessWidget {
 
         // Profile / Settings Action
         IconButton(
-          onPressed: () {
+          onPressed: onSettingsTapped ?? () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
             );

@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../calendar/calendar_screen.dart';
 import '../myspace/myspace_screen.dart';
 import '../quick_add/quick_add_sheet.dart';
+import '../settings/settings_screen.dart';
 import '../tasks/tasks_screen.dart';
 import '../today/today_screen.dart';
 
@@ -33,6 +34,9 @@ class _MainScaffoldState extends State<MainScaffold> {
       case 'myspace':
         _currentIndex = 3;
         break;
+      case 'settings':
+        _currentIndex = 4;
+        break;
       case 'today':
       default:
         _currentIndex = 0;
@@ -55,6 +59,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       CalendarScreen(appState: widget.appState, onNavigateToTab: _onNavigateToTab),
       TasksScreen(appState: widget.appState),
       MySpaceScreen(appState: widget.appState),
+      const SettingsScreen(),
     ];
 
     return Scaffold(
@@ -83,29 +88,49 @@ class _MainScaffoldState extends State<MainScaffold> {
           destinations: [
             NavigationDestination(
               icon: const Icon(Icons.wb_sunny_outlined),
-              selectedIcon: Icon(Icons.wb_sunny_rounded, color: AppColors.warmAmberForeground),
+              selectedIcon: Icon(
+                Icons.wb_sunny_rounded,
+                color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+              ),
               label: 'Today',
             ),
             NavigationDestination(
               icon: const Icon(Icons.calendar_month_outlined),
-              selectedIcon: Icon(Icons.calendar_month_rounded, color: AppColors.warmAmberForeground),
+              selectedIcon: Icon(
+                Icons.calendar_month_rounded,
+                color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+              ),
               label: 'Calendar',
             ),
             NavigationDestination(
               icon: const Icon(Icons.check_box_outlined),
-              selectedIcon: Icon(Icons.check_box_rounded, color: AppColors.warmAmberForeground),
+              selectedIcon: Icon(
+                Icons.check_box_rounded,
+                color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+              ),
               label: 'Tasks',
             ),
             NavigationDestination(
               icon: const Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view_rounded, color: AppColors.warmAmberForeground),
+              selectedIcon: Icon(
+                Icons.grid_view_rounded,
+                color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+              ),
               label: 'My Space',
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.settings_outlined),
+              selectedIcon: Icon(
+                Icons.settings_rounded,
+                color: isDark ? AppColors.primaryLightText : AppColors.primaryDarkText,
+              ),
+              label: 'Settings',
             ),
           ],
         ),
       ),
       // Golden Amber Floating (+) Action Button (Image 2 style)
-      floatingActionButton: _currentIndex != 1
+      floatingActionButton: (_currentIndex != 1 && _currentIndex != 4)
           ? FloatingActionButton(
               onPressed: () {
                 showModalBottomSheet(
@@ -125,3 +150,4 @@ class _MainScaffoldState extends State<MainScaffold> {
     );
   }
 }
+

@@ -335,28 +335,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.celebration_rounded,
-                            size: 14,
-                            color: isDark ? AppColors.warmAmber : AppColors.warmAmberForeground,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              "We'll remember your special day and wish you a wonderful birthday! 🎂",
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
                       if (_errorMessage != null) ...[
                         const SizedBox(height: 14),
                         Text(
