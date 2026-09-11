@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/category_definitions.dart';
@@ -147,26 +148,69 @@ class DayDetailSheet extends StatelessWidget {
   }
 
   Widget _buildBillTile(BillItem bill, bool isDark) {
+    final hasCustomImg = bill.customImagePath != null && File(bill.customImagePath!).existsSync();
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurfaceMuted : AppColors.lightSurfaceMuted,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 0.8,
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              const Icon(Icons.payment_rounded, size: 18, color: AppColors.dustyRose),
-              const SizedBox(width: 10),
-              Text(bill.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+              if (hasCustomImg)
+                Container(
+                  width: 36,
+                  height: 36,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.file(File(bill.customImagePath!), fit: BoxFit.cover),
+                )
+              else
+                Container(
+                  width: 36,
+                  height: 36,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warmAmber,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.payment_rounded, size: 20, color: Colors.white),
+                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(bill.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Renews: ${bill.renewalDate}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? AppColors.secondaryLightText : AppColors.secondaryDarkText,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
           Text(
             '${bill.currency} ${bill.amount.toStringAsFixed(2)}',
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
         ],
       ),

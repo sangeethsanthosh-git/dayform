@@ -154,7 +154,7 @@ class MonthTimelineView extends StatelessWidget {
                   selectedDate.day == dayDate.day;
 
               final hasEvents = events.any((e) => e.dateOnly == dayDateStr);
-              final hasBills = bills.any((b) => b.renewalDate == dayDateStr);
+              final hasBills = bills.any((b) => b.isDueOnDate(dayDate));
 
               return GestureDetector(
                 onTap: () => onDateSelected(dayDate),

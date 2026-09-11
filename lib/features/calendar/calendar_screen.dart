@@ -407,7 +407,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final dateStr = _formatDate(date);
     final dayEvents = widget.appState.allEvents.where((e) => e.dateOnly == dateStr).toList();
     final dayTasks = widget.appState.todayTasks.where((t) => t.dueDate == dateStr).toList();
-    final dayBills = widget.appState.bills.where((b) => b.renewalDate == dateStr).toList();
+    final dayBills = widget.appState.bills.where((b) => b.isDueOnDate(date)).toList();
     final dayBirthdays = widget.appState.birthdays.where((b) {
       final parts = b.birthDate.split('-');
       return (parts.length == 3 && parts[1] == date.month.toString().padLeft(2, '0') && parts[2] == date.day.toString().padLeft(2, '0')) ||

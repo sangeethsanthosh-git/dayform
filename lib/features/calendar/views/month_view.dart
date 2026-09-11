@@ -90,7 +90,7 @@ class MonthView extends StatelessWidget {
 
             // Gather items on this date
             final dayEvents = events.where((e) => e.dateOnly == cellDateStr).toList();
-            final dayBills = bills.where((b) => b.renewalDate == cellDateStr).toList();
+            final dayBills = bills.where((b) => b.isDueOnDate(cellDate)).toList();
             final dayBirthdays = birthdays.where((b) {
               final parts = b.birthDate.split('-');
               return (parts.length == 3 && parts[1] == cellDate.month.toString().padLeft(2, '0') && parts[2] == cellDate.day.toString().padLeft(2, '0')) ||
@@ -164,6 +164,13 @@ class MonthView extends StatelessWidget {
             color: AppColors.warmAmber,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
           clipBehavior: Clip.antiAlias,
           alignment: Alignment.center,
@@ -177,22 +184,29 @@ class MonthView extends StatelessWidget {
       );
     }
 
-    // Bill logo badges
+    // Bill logo & custom added image badges
     for (final bill in bills) {
       final hasCustomImg = bill.customImagePath != null && File(bill.customImagePath!).existsSync();
       badges.add(
         Container(
-          width: 20,
-          height: 20,
+          width: 22,
+          height: 22,
           decoration: BoxDecoration(
             color: _getBrandColor(bill.brandLogo),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.white, width: 1.2),
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: Colors.white, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
           clipBehavior: Clip.antiAlias,
           alignment: Alignment.center,
           child: hasCustomImg
-              ? Image.file(File(bill.customImagePath!), width: 20, height: 20, fit: BoxFit.cover)
+              ? Image.file(File(bill.customImagePath!), width: 22, height: 22, fit: BoxFit.cover)
               : Icon(_getBrandIconData(bill.brandLogo), size: 12, color: Colors.white),
         ),
       );
@@ -219,14 +233,15 @@ class MonthView extends StatelessWidget {
       return badges.first;
     }
 
-    // Overlapping row
+    // Overlapping row (up to 3 items)
     return SizedBox(
       height: 22,
-      width: 36,
+      width: badges.length > 2 ? 44 : 36,
       child: Stack(
         children: [
           Positioned(left: 0, child: badges[0]),
-          Positioned(left: 12, child: badges[1]),
+          Positioned(left: 11, child: badges[1]),
+          if (badges.length > 2) Positioned(left: 22, child: badges[2]),
         ],
       ),
     );

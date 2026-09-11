@@ -61,6 +61,25 @@ class BillItem {
     );
   }
 
+  bool isDueOnDate(DateTime date) {
+    final dateStr = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    if (renewalDate == dateStr) return true;
+
+    final parts = renewalDate.split('-');
+    if (parts.length >= 3) {
+      final dueDay = int.tryParse(parts[2]);
+      if (dueDay == null) return false;
+
+      if (recurrence.toLowerCase() == 'monthly') {
+        return date.day == dueDay;
+      } else if (recurrence.toLowerCase() == 'yearly') {
+        final dueMonth = int.tryParse(parts[1]);
+        return date.month == dueMonth && date.day == dueDay;
+      }
+    }
+    return false;
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

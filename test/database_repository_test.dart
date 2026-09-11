@@ -108,6 +108,41 @@ void main() {
       expect(activeBills.first.renewalDate, equals('2026-10-10'));
     });
 
+    test('Bills: isDueOnDate accurately matches recurring and specific calendar dates', () {
+      final monthlyBill = BillItem(
+        id: 'bill_gym',
+        name: 'Gym',
+        amount: 45.0,
+        currency: 'USD',
+        renewalDate: '2026-09-15',
+        recurrence: 'monthly',
+        customImagePath: '/data/user/0/com.dayform.app/gym_card.png',
+        createdAt: DateTime(2026, 9, 1),
+      );
+
+      // Matches exact start date
+      expect(monthlyBill.isDueOnDate(DateTime(2026, 9, 15)), isTrue);
+      // Matches next month on 15th
+      expect(monthlyBill.isDueOnDate(DateTime(2026, 10, 15)), isTrue);
+      expect(monthlyBill.isDueOnDate(DateTime(2026, 11, 15)), isTrue);
+      // Does not match other days
+      expect(monthlyBill.isDueOnDate(DateTime(2026, 9, 14)), isFalse);
+      expect(monthlyBill.isDueOnDate(DateTime(2026, 10, 16)), isFalse);
+
+      final yearlyBill = BillItem(
+        id: 'bill_domain',
+        name: 'Domain Renewal',
+        amount: 12.0,
+        currency: 'USD',
+        renewalDate: '2026-03-20',
+        recurrence: 'yearly',
+        createdAt: DateTime(2026, 1, 1),
+      );
+      expect(yearlyBill.isDueOnDate(DateTime(2026, 3, 20)), isTrue);
+      expect(yearlyBill.isDueOnDate(DateTime(2027, 3, 20)), isTrue);
+      expect(yearlyBill.isDueOnDate(DateTime(2026, 4, 20)), isFalse);
+    });
+
     test('Birthdays: milestone age calculation and repository insertion', () async {
       final bday = BirthdayItem(
         id: 'bday_1',
